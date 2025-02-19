@@ -1,0 +1,110 @@
+.cell-dashboard-button-container {
+  position: absolute;
+  left: 13px;
+  bottom: -29px;
+  width: var(--jp-cell-prompt-width);
+  height: 34px;
+  z-index: 9999;
+}
+
+.cell-dashboard-button {
+  cursor: pointer;
+  background-color: var(--jp-brand-color1);
+  border-radius: 0 0 5px 5px;
+  border: none;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-dashboard-button:hover {
+  background-color: var(--jp-brand-color0);
+}
+
+.cell-dashboard-button:disabled {
+  background-color: var(--jp-inverse-layout-color4);
+  cursor: not-allowed;
+}
+
+.cell-dashboard-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cell-dashboard-button [fill] {
+  fill: white;
+}
+
+.dashboard-export-dialog-container {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dashboard-export-dialog-container p {
+  font-size: var(--jp-ui-font-size2);
+  font-weight: 400;
+  padding-left: 8px;
+}
+
+.dashboard-export-dialog-calendar-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  cursor: default;
+  padding: 20px;
+}
+
+.dashboard-export-dialog-calendar {
+  border: 1px solid var(--jp-brand-color1);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  cursor: pointer;
+}
+
+.dashboard-calendar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 20px;
+}
+
+input.dashboard-calendar-input {
+  cursor: pointer;
+}
+
+body[data-jp-theme-light='false'] input.dashboard-calendar-input {
+  color-scheme: dark;
+}
+
+.dashboard-calendar-input-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.dashboard-calendar-input-wrapper.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dashboard-calendar-input-wrapper.disabled input.dashboard-calendar-input {
+  pointer-events: none;
+  background-color: var(--jp-layout-color4);
+}
+
+.dashboard-calendar-button-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 15px 5px;
+}

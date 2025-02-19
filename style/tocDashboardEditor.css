@@ -1,0 +1,43 @@
+.dashboard-toc-code-cell-div {
+  display: inline-flex;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.dashboard-toc-code-span {
+  width: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--jp-layout-color0);
+  border: var(--jp-border-width) solid var(--jp-layout-color3);
+  max-height: 38px;
+  min-height: 24px;
+}
+
+/* target all children of dashboard-toc-cell-input and change the font-size */
+.dashboard-toc-cell-input * {
+  font-size: 9px;
+  overflow: hidden;
+}
+
+.dashboard-toc-code-cell-prompt {
+  flex: 0 0 27px;
+  color: var(--jp-cell-prompt-not-active-font-color);
+  opacity: var(--jp-cell-prompt-not-active-opacity);
+  font-family: var(--jp-cell-prompt-font-family);
+  padding: var(--jp-code-padding);
+  padding-right: 0;
+  padding-left: 0;
+  letter-spacing: var(--jp-cell-prompt-letter-spacing);
+  line-height: var(--jp-code-line-height);
+  font-size: 8px;
+  border: var(--jp-border-width) solid transparent;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

@@ -1,0 +1,61 @@
+{
+  "jupyter.lab.setting-icon": "jupyterlab_unianalytics_dashboard:visu-icon",
+  "jupyter.lab.setting-icon-label": "Unianalytics: Dashboards",
+  "title": "Unianalytics: Dashboards",
+  "description": "Settings for both unianalytics side panel visualization widgets.",
+  "jupyter.lab.menus": {
+    "main": [
+      {
+        "id": "jp-mainmenu-view",
+        "items": [
+          {
+            "type": "separator",
+            "rank": 19.9
+          },
+          {
+            "command": "jupyterlab_unianalytics_dashboard:dashboard-open-login",
+            "rank": 20
+          },
+          {
+            "type": "separator",
+            "rank": 20.1
+          }
+        ]
+      }
+    ]
+  },
+  "properties": {
+    "commonDashboardSettings": {
+      "title": "Dashboard Settings",
+      "type": "object",
+      "properties": {
+        "dashboardCollection": {
+          "title": "Collect clicks relative to dashboard usage",
+          "description": "Whether to enable the collection of interaction clicks with the dashboard extension to better understand what features are more or less used.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "tocDashboardSettings": {
+      "title": "Table of Contents Dashboard",
+      "type": "object",
+      "properties": {
+        "numberingH1": {
+          "title": "Enable h1 numbering",
+          "description": "Whether to number first level headings.",
+          "type": "boolean",
+          "default": true
+        },
+        "syncCollapseState": {
+          "type": "boolean",
+          "title": "Synchronize the collapse state of the headings",
+          "description": "If set to true, when a header is collapsed in the ToC the corresponding section in the notebook is collapsed as well and vice versa.",
+          "default": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}

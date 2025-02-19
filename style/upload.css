@@ -1,0 +1,33 @@
+.unianalytics-link-container {
+  border: 1px solid var(--jp-inverse-layout-color4);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.unianalytics-link {
+  padding: 5px 15px;
+  flex: 1;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unianalytics-link-button-container {
+  padding: 5px;
+  border-left: 1px solid var(--jp-inverse-layout-color4);
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.unianalytics-link-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}

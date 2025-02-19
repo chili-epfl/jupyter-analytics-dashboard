@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="1" failures="0" errors="0" time="25.156">
+  <testsuite name="jupyterlab_unianalytics_dashboard" errors="0" failures="0" skipped="0" timestamp="2024-01-26T16:04:36" time="13.286" tests="1">
+    <testcase classname="jupyterlab_unianalytics_dashboard should be tested" name="jupyterlab_unianalytics_dashboard should be tested" time="0.005">
+    </testcase>
+  </testsuite>
+</testsuites>
