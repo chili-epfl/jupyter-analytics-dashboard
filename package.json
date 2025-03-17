@@ -65,6 +65,7 @@
         "@reduxjs/toolkit": "^1.9.5",
         "bootstrap": "^5.3.2",
         "chart.js": "^4.4.1",
+        "d3": "^7.9.0",
         "marked": "^11.1.1",
         "react-bootstrap": "^2.10.0",
         "react-bootstrap-icons": "^1.10.3",
@@ -76,6 +77,7 @@
     "devDependencies": {
         "@jupyterlab/builder": "^4.0.0",
         "@jupyterlab/testutils": "^4.0.0",
+        "@types/d3": "^7.4.3",
         "@types/jest": "^29.2.0",
         "@types/json-schema": "^7.0.11",
         "@types/react": "^18.0.26",
