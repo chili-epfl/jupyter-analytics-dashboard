@@ -74,3 +74,27 @@ export type InteractionClick = {
   click_type: 'ON' | 'OFF';
   signal_origin: string;
 };
+
+
+export interface JSONGraph {
+  directed: boolean;
+  multigraph: boolean;
+  graph: any;
+  nodes: JSONGraphNode[];
+  edges: JSONGraphEdge[];
+}
+
+export interface JSONGraphNode {
+  id: number;
+  label: string;
+  // properties to be recognized as SimulationNodeDatum in D3
+  x?: number;
+  y?: number;
+  fx?: number | null;
+  fy?: number | null;
+}
+
+export interface JSONGraphEdge {
+  source: number | JSONGraphNode;  // node.id
+  target: number | JSONGraphNode;  // node.id
+}
