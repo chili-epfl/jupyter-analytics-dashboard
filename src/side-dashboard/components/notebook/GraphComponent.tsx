@@ -15,8 +15,8 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
 
         const simulation = d3.forceSimulation(props.nxJsonData.nodes)
             .force("link", d3.forceLink(props.nxJsonData.edges)
-                            .id(d => (d as JSONGraphNode).id)
-                            .distance(50))
+                .id(d => (d as JSONGraphNode).id)
+                .distance(40))
             .force("charge", d3.forceManyBody().strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .on("tick", ticked);
@@ -30,11 +30,12 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
             .attr("stroke-width", 2)
             .attr("marker-end", "url(#arrow)");
 
+        const node_radius = 10;
         const node = svg.append("g")
             .selectAll("circle")
             .data(props.nxJsonData.nodes)
             .enter().append("circle")
-            .attr("r", 10)
+            .attr("r", node_radius)
             .attr("fill", "steelblue")
 
         // Add arrow markers for directed edges
@@ -52,6 +53,8 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
 
         node.append("title")
             .text(d => `Cell ${d.id}`);
+
+        let draggedOnce = false;
         // Add a drag behavior.
         node.call(d3.drag<any, any, any>()
             .on("start", dragstarted)
@@ -68,12 +71,26 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
             node
                 .attr("cx", (d: any) => d.x)
                 .attr("cy", (d: any) => d.y);
+            if (!draggedOnce) {
+                const xExtent = d3.extent(node.data(), d => d.x) as [number, number];
+                const yExtent = d3.extent(node.data(), d => d.y) as [number, number];
+                const newWidth = Math.abs(xExtent[0]) + xExtent[1];
+                const newHeight = Math.abs(yExtent[0]) + yExtent[1];
+                const margin = node_radius*2
+                svg.attr("viewBox", [
+                    xExtent[0] - margin,
+                    yExtent[0] - margin,
+                    newWidth + margin,
+                    newHeight + margin
+                ]);
+            }
         }
 
         function dragstarted(event: any) {
             if (!event.active) simulation.alphaTarget(0.3).restart();
             event.subject.fx = event.subject.x;
             event.subject.fy = event.subject.y;
+            draggedOnce = true;
         }
 
         function dragged(event: any) {
@@ -86,6 +103,8 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
             event.subject.fx = null;
             event.subject.fy = null;
         }
+
+
     }, [props.nxJsonData]);
 
     return <svg ref={svgRef} width={250} height={250}></svg>;
