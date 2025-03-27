@@ -71,19 +71,21 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
             node
                 .attr("cx", (d: any) => d.x)
                 .attr("cy", (d: any) => d.y);
-            if (!draggedOnce) {
-                const xExtent = d3.extent(node.data(), d => d.x) as [number, number];
-                const yExtent = d3.extent(node.data(), d => d.y) as [number, number];
-                const newWidth = Math.abs(xExtent[0]) + xExtent[1];
-                const newHeight = Math.abs(yExtent[0]) + yExtent[1];
-                const margin = node_radius*2
-                svg.attr("viewBox", [
-                    xExtent[0] - margin,
-                    yExtent[0] - margin,
-                    newWidth + margin,
-                    newHeight + margin
-                ]);
+            const xExtent = d3.extent(node.data(), d => d.x) as [number, number];
+            const yExtent = d3.extent(node.data(), d => d.y) as [number, number];
+            
+            if (!!xExtent[0] || !!xExtent[1] || !!yExtent[0] || !!yExtent[1]) {
+                return;
             }
+            const newWidth = Math.abs(xExtent[0]) + xExtent[1];
+            const newHeight = Math.abs(yExtent[0]) + yExtent[1];
+            const margin = node_radius*2
+            svg.attr("viewBox", [
+                xExtent[0] - margin,
+                yExtent[0] - margin,
+                newWidth + margin,
+                newHeight + margin
+            ]);
         }
 
         function dragstarted(event: any) {
