@@ -7,10 +7,10 @@ import {
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
-
+import { ICommandPalette } from '@jupyterlab/apputils';
 //importing bootstrap
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { APP_ID, PLUGIN_ID } from './utils/constants';
+import { APP_ID, CommandIDs, PLUGIN_ID } from './utils/constants';
 import {
   compareVersions,
   fetchWithCredentials,
@@ -22,6 +22,7 @@ import { InteractionRecorder } from './utils/interactionRecorder';
 import { activateLoginPlugin } from './plugins/login';
 import { Signal } from '@lumino/signaling';
 import { RegistrationState } from './utils/interfaces';
+import { activateUploadNotebookPopup } from './plugins/uploadNotebookV2';
 
 // class and global instance of that class used to emit signals such as expired token to the dashboard panels to update the rendered element
 export class AuthSignal {
@@ -58,7 +59,8 @@ const activate = (
   restorer: ILayoutRestorer,
   labShell: ILabShell,
   rendermime: IRenderMimeRegistry,
-  settingRegistry: ISettingRegistry
+  settingRegistry: ISettingRegistry,
+  palette: ICommandPalette
 ): void => {
   console.log(`JupyterLab extension ${APP_ID} is activated!`);
 
@@ -99,6 +101,8 @@ const activate = (
         settings
       );
 
+      activateUploadNotebookPopup(app);
+      palette.addItem({command: CommandIDs.uploadNotebookPopup, category: 'unianalytics'});
       // check if the user can login with the tokens stored in localStorage
       fetchWithCredentials(`${BACKEND_API_URL}/jwt/check`)
         .then(loginResponse => {
@@ -170,7 +174,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
     ILayoutRestorer,
     ILabShell,
     IRenderMimeRegistry,
-    ISettingRegistry
+    ISettingRegistry,
+    ICommandPalette
   ],
   optional: [],
   activate: activate

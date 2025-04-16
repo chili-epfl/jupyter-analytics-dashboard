@@ -545,3 +545,13 @@ button.dashboard-playback-time-button-container,
 .dashboard-loginbox-content .form-control::placeholder {
   color: var(--jp-inverse-layout-color3);
 }
+
+.dashboard-unbpopup-title-container {
+    font-size: 16px;
+    width: 100%;
+}
+
+.dashboard-unbpopup-content-container {
+  font-size: 12px;
+  width: 600px;
+}
