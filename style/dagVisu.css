@@ -1,0 +1,8 @@
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.part-text {
+    max-width: 100px;
+    text-overflow: ellipsis;
+}

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { BACKEND_API_URL } from "../../..";
 import { RootState } from "../../../redux/store";
-import { JSONGraph } from "../../../utils/interfaces";
-import { fetchWithCredentials } from "../../../utils/utils";
+import { CodeExecution, JSONGraph } from "../../../utils/interfaces";
+import { fetchWithCredentials, generateQueryArgsString } from "../../../utils/utils";
 import ChartContainer from "./ChartContainer";
 import GraphComponent from "./GraphComponent";
 
@@ -15,6 +15,11 @@ const DAGComponent = (props: { notebookId: string }) => {
         nodes: [],
         graph: null
     });
+
+    const dashboardQueryArgsRedux = useSelector(
+        (state: RootState) => state.commondashboard.dashboardQueryArgs
+    );
+    const [codeExecution, setCodeExecution] = useState<CodeExecution[]>([]);
     const refreshRequired = useSelector(
         (state: RootState) => state.commondashboard.refreshBoolean
     );
@@ -24,13 +29,22 @@ const DAGComponent = (props: { notebookId: string }) => {
         )
             .then(response => response.json())
             .then(newNxJsonData => setnxJsonData(newNxJsonData));
+    }, [])
+    useEffect(() => {
+        fetchWithCredentials(
+            `${BACKEND_API_URL}/dashboard/${props.notebookId}/user_code_execution?${generateQueryArgsString(dashboardQueryArgsRedux, props.notebookId)}`
+        )
+            .then(response => response.json())
+            .then(newCodeExecution => setCodeExecution(newCodeExecution));
     }, [refreshRequired]);
 
     return (
-        <ChartContainer
-            PassedComponent={<GraphComponent nxJsonData={nxJsonData}></GraphComponent>}
-            title="Notebook DAG"
-        />
+        <div className="row justify-content-center">
+            <ChartContainer
+                PassedComponent={<GraphComponent nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
+                title="Notebook DAG"
+            />
+        </div>
     );
 }
 

@@ -16,6 +16,8 @@ export namespace CommandIDs {
 
   export const uploadNotebook = `${APP_ID}:dashboard-upload-notebook`;
 
+  export const uploadNotebookPopup = `${APP_ID}:dashboard-upload-notebook-popup`
+
   export const copyDownloadLink = `${APP_ID}:dashboard-copy-download-link`;
 
   export const openLogin = `${APP_ID}:dashboard-open-login`;

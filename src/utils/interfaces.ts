@@ -2,7 +2,7 @@ import { ISignal } from '@lumino/signaling';
 import { INotebookHeading } from './headings';
 import { NotebookPanel } from '@jupyterlab/notebook';
 
-export abstract class IOptionsManager {}
+export abstract class IOptionsManager { }
 
 export interface ICollapseChangedArgs {
   collapsedState: boolean;
@@ -87,6 +87,9 @@ export interface JSONGraph {
 export interface JSONGraphNode {
   id: number;
   label: string;
+  part: string;
+  level: number;
+  cell_id?: string[];  // special nodes of parts do not have unianalytics cell ids.
   // properties to be recognized as SimulationNodeDatum in D3
   x?: number;
   y?: number;
@@ -97,4 +100,18 @@ export interface JSONGraphNode {
 export interface JSONGraphEdge {
   source: number | JSONGraphNode;  // node.id
   target: number | JSONGraphNode;  // node.id
+  weight?: number;
+}
+
+
+export enum ShowLevel {
+  PART = "part",
+  CELL = "cell"
+}
+
+export interface CodeExecution {
+  cell: string,
+  code_exec_ok_pct: number,
+  code_exec_pct: number,
+  cell_click_pct: number
 }

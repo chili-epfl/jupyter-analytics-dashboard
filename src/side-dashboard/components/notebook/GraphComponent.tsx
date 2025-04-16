@@ -1,115 +1,53 @@
-import * as d3 from "d3";
 import React, { useEffect, useRef } from "react";
-import { JSONGraph, JSONGraphNode } from "../../../utils/interfaces";
+import { CodeExecution, JSONGraph } from "../../../utils/interfaces";
+import Loader from "../placeholder/Loader";
+import { initGraph, updateGraph } from "./GraphD3";
 
 
-const GraphComponent = (props: ({ nxJsonData: JSONGraph })) => {
-
-    const svgRef = useRef<SVGSVGElement>(null);
+const GraphComponent = (props: ({ nxJsonData: JSONGraph, codeExecution: CodeExecution[] })) => {
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        const width = 250, height = 250;
-
-        const svg = d3.select(svgRef.current);
-        svg.selectAll("*").remove();
-
-        const simulation = d3.forceSimulation(props.nxJsonData.nodes)
-            .force("link", d3.forceLink(props.nxJsonData.edges)
-                .id(d => (d as JSONGraphNode).id)
-                .distance(40))
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("center", d3.forceCenter(width / 2, height / 2))
-            .on("tick", ticked);
-
-        const link = svg.append("g")
-            .attr("stroke", "#999")
-            .attr("stroke-opacity", 0.6)
-            .selectAll("line")
-            .data(props.nxJsonData.edges)
-            .join("line")
-            .attr("stroke-width", 2)
-            .attr("marker-end", "url(#arrow)");
-
-        const node_radius = 10;
-        const node = svg.append("g")
-            .selectAll("circle")
-            .data(props.nxJsonData.nodes)
-            .enter().append("circle")
-            .attr("r", node_radius)
-            .attr("fill", "steelblue")
-
-        // Add arrow markers for directed edges
-        svg.append("defs").append("marker")
-            .attr("id", "arrow")
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 15)
-            .attr("refY", 0)
-            .attr("markerWidth", 6)
-            .attr("markerHeight", 6)
-            .attr("orient", "auto")
-            .append("path")
-            .attr("d", "M0,-5L10,0L0,5")
-            .attr("fill", "#999");
-
-        node.append("title")
-            .text(d => `Cell ${d.id}`);
-
-        let draggedOnce = false;
-        // Add a drag behavior.
-        node.call(d3.drag<any, any, any>()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended));
-
-        function ticked() {
-            link
-                .attr("x1", (d: any) => d.source.x)
-                .attr("y1", (d: any) => d.source.y)
-                .attr("x2", (d: any) => d.target.x)
-                .attr("y2", (d: any) => d.target.y);
-
-            node
-                .attr("cx", (d: any) => d.x)
-                .attr("cy", (d: any) => d.y);
-            const xExtent = d3.extent(node.data(), d => d.x) as [number, number];
-            const yExtent = d3.extent(node.data(), d => d.y) as [number, number];
-            
-            if (!!xExtent[0] || !!xExtent[1] || !!yExtent[0] || !!yExtent[1]) {
-                return;
-            }
-            const newWidth = Math.abs(xExtent[0]) + xExtent[1];
-            const newHeight = Math.abs(yExtent[0]) + yExtent[1];
-            const margin = node_radius*2
-            svg.attr("viewBox", [
-                xExtent[0] - margin,
-                yExtent[0] - margin,
-                newWidth + margin,
-                newHeight + margin
-            ]);
+        if (containerRef.current) {
+            initGraph(containerRef.current, props.nxJsonData, props.codeExecution);
         }
-
-        function dragstarted(event: any) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            event.subject.fx = event.subject.x;
-            event.subject.fy = event.subject.y;
-            draggedOnce = true;
-        }
-
-        function dragged(event: any) {
-            event.subject.fx = event.x;
-            event.subject.fy = event.y;
-        }
-
-        function dragended(event: any) {
-            if (!event.active) simulation.alphaTarget(0);
-            event.subject.fx = null;
-            event.subject.fy = null;
-        }
+    }, [props.nxJsonData]);  // only watch code execution updates since nxJsonGraph is static
 
 
-    }, [props.nxJsonData]);
+    useEffect(() => {
+        updateGraph(props.codeExecution);
+    }, [props.codeExecution]);
 
-    return <svg ref={svgRef} width={250} height={250}></svg>;
+    return (
+        <div className="container-fluid">
+            <div className="row justify-content-center">
+                <svg height="30px" width="100%">
+                    <defs>
+                        <linearGradient id="blue-gradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="rgb(247, 251, 255)"></stop><stop offset="10%" stop-color="rgb(227, 238, 249)"></stop><stop offset="20%" stop-color="rgb(207, 225, 242)"></stop><stop offset="30%" stop-color="rgb(181, 212, 233)"></stop><stop offset="40%" stop-color="rgb(147, 195, 223)"></stop><stop offset="50%" stop-color="rgb(109, 174, 213)"></stop><stop offset="60%" stop-color="rgb(75, 151, 201)"></stop><stop offset="70%" stop-color="rgb(47, 126, 188)"></stop><stop offset="80%" stop-color="rgb(24, 100, 170)"></stop><stop offset="90%" stop-color="rgb(10, 74, 144)"></stop><stop offset="100%" stop-color="rgb(8, 48, 107)"></stop></linearGradient>
+                    </defs>
+                    <rect x="10" y="0" width="100%" height="10" stroke="#000000" stroke-width="1" style={{ fill: 'url(#blue-gradient)' }}></rect>
+                    <text x="50%" y="25" text-anchor="middle" style={{ fontSize: 8 }}>- activity +</text>
+                </svg>
+            </div>
+            <div className="row justify-content-center">
+                <div className="col-auto">
+                    <p className="text-end">Cell level</p>
+                </div>
+                <div className="d-flex col-auto">
+                    <div className="form-check form-switch">
+                        <input className="form-check-input" type="checkbox" role="switch" id="levelSwitch" defaultChecked></input>
+                    </div>
+                </div>
+                <div className="col-auto">
+                    <p>Part level</p>
+                </div>
+            </div>
+            <div className="row" style={{ "height": "250px" }}>
+                <div id="dagLoader"><Loader /></div>
+                <div ref={containerRef} id="main-s" style={{ width: "100%", height: "250px" }} />
+            </div>
+        </div>
+    );
 };
 
 export default GraphComponent;
