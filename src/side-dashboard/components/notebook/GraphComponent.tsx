@@ -13,7 +13,6 @@ const GraphComponent = (props: ({ nxJsonData: JSONGraph, codeExecution: CodeExec
         }
     }, [props.nxJsonData]);  // only watch code execution updates since nxJsonGraph is static
 
-
     useEffect(() => {
         updateGraph(props.codeExecution);
     }, [props.codeExecution]);

@@ -1,13 +1,88 @@
 import * as d3 from "d3";
 import { CodeExecution, JSONGraph, JSONGraphNode, ShowLevel } from "../../../utils/interfaces";
 
+// for part activity
+const blueScale = d3.scaleSequential(d3.interpolateBlues);
+let totalActivity: number = -1;
+let levelShown = ShowLevel.PART;
+let codeExecution: CodeExecution[] = [];
+
+function filterNodesOfPart(node: JSONGraphNode, part: string) {
+    /* return only nodes of part part */
+    return node.part === part || node.part === part
+}
+
+function getPartsNodes() {
+    return d3.select("#main-s")
+             .select("svg")
+             .select("g[name=ellipses]")
+             .selectAll("ellipse")
+}
+
+function getCellNodes() {
+    return d3.select("#main-s")
+             .select("svg")
+             .select("g[name=nodes]")
+             .selectAll("circle")
+}
+
+function getActivityOfPart(part: string) {
+    /* return the activity as a float [0-1] of a part
+    The activity is computed as the sum of
+    (code_exec_ok_pct+code_exec_pct)/totalActivity for all nodes of part part. */
+    let cellIdsOfPart: string[] = [];
+        //@ts-ignore
+        getCellNodes().filter(n => filterNodesOfPart(n, part)).each(n => {
+        //@ts-ignore
+        if (!!n.cell_id) {
+        //@ts-ignore
+            cellIdsOfPart.push(n.cell_id[0]);
+        }
+    });
+    const cellsOfPart = codeExecution.filter((activity) =>
+        cellIdsOfPart.includes(activity.cell))
+    if (cellsOfPart) {
+        return cellsOfPart.reduce((c, a) => c + a.code_exec_ok_pct + a.code_exec_pct, 0)
+            / totalActivity;
+    }
+    return 0.2;  // TODO set 0 or transparent if no activity!
+}
+
+function getActivityOfNode(n: JSONGraphNode) {
+    const cellNode = codeExecution.find((cell) => cell.cell === (n.cell_id || [""])[0]);
+    if (cellNode) {
+        return (cellNode.code_exec_ok_pct + cellNode.code_exec_pct) / totalActivity;
+    }
+    return 0.2;  // TODO set 0 or transparent if no activity!
+}
+
+export function updateGraph(newCodeExecution: CodeExecution[]) {
+    console.log("newCodeExecution");
+    console.log(newCodeExecution);
+
+    if (newCodeExecution.length === 0) {
+        return;
+    }
+
+    totalActivity = newCodeExecution.reduce((c, a) =>
+        c + a.code_exec_ok_pct + a.code_exec_pct, 0);
+    codeExecution = newCodeExecution;
+    if (levelShown === ShowLevel.PART) {
+        //@ts-ignore
+        getPartsNodes().attr("fill", (p) => blueScale(getActivityOfPart(p)));
+    } else {
+        //@ts-ignore
+        getCellNodes().attr("fill", (n) => blueScale(getActivityOfNode(n)));
+    }
+}
+
 export function initGraph(
     container: HTMLElement,
     nxJsonData: JSONGraph,
     codeExecution: CodeExecution[]
 ) {
     let aPartIsSelected = false;
-    let levelShown: ShowLevel = ShowLevel.PART;
+    // let levelShown: ShowLevel = ShowLevel.PART;
 
     container.innerHTML = "";
 
@@ -29,8 +104,6 @@ export function initGraph(
     const parts = [...new Set(nxJsonData.nodes.map(n => n.part))];
 
     // color scales
-    // for part activity
-    const blueScale = d3.scaleSequential(d3.interpolateBlues);
     // for part singular color
     const nodeColorScale = d3.scaleOrdinal(parts, d3.schemeTableau10);
 
@@ -58,52 +131,12 @@ export function initGraph(
             ((edge.target as JSONGraphNode).part === part && !onlySource)
     }
 
-    function filterNodesOfPart(node: JSONGraphNode, part: string) {
-        /* return only nodes of part part */
-        return node.part === part || node.part === part
-    }
 
     function getPartOfNodeId(id: number): string {
         /* return the part of the node from a node id */
         return nxJsonData.nodes.find(n => n.id == id)?.part || "undefined"
     }
 
-    function getActivityOfPart(part: string) {
-        /* return the activity as a float [0-1] of a part
-        The activity is computed as the sum of
-        (code_exec_ok_pct+code_exec_pct)/totalActivity for all nodes of part part. */
-        let cellIdsOfPart: string[] = [];
-        cellNodes.filter(n => filterNodesOfPart(n, part)).each(n => {
-            if (!!n.cell_id)
-                cellIdsOfPart.push(n.cell_id[0]);
-        });
-        const cellsOfPart = codeExecution.filter((activity) =>
-            cellIdsOfPart.includes(activity.cell))
-        if (cellsOfPart) {
-            return cellsOfPart.reduce((c, a) => c + a.code_exec_ok_pct + a.code_exec_pct, 0)
-                / totalActivity;
-        }
-        return 0.2;  // TODO set 0 or transparent if no activity!
-    }
-
-    function getActivityOfNode(n: JSONGraphNode) {
-        const cellNode = codeExecution.find((cell) => cell.cell === (n.cell_id || [""])[0]);
-        if (cellNode) {
-            return (cellNode.code_exec_ok_pct + cellNode.code_exec_pct) / totalActivity;
-        }
-        return 0.2;  // TODO set 0 or transparent if no activity!
-    }
-
-    function onActivityChanged(newCodeExec: CodeExecution[]) {
-        totalActivity = newCodeExec.reduce((c, a) =>
-            c + a.code_exec_ok_pct + a.code_exec_pct, 0);
-        codeExecution = newCodeExec;
-        if (levelShown == ShowLevel.PART) {
-            partNodes.attr("fill", (p) => blueScale(getActivityOfPart(p)));
-        } else {
-            cellNodes.attr("fill", (n) => blueScale(getActivityOfNode(n)));
-        }
-    }
 
     // ==========================================================================
 
@@ -227,6 +260,7 @@ export function initGraph(
         .selectAll("ellipse")
         .data(parts)
         .enter().append("ellipse")
+        .attr("fill", "#FFFFFF")
         .attr("stroke-width", 3)
         .attr("stroke", (p) => nodeColorScale(p))
         .attr("class", "cursor-pointer")
@@ -394,7 +428,7 @@ export function initGraph(
         partNodes
             .attr("cx", (p) => centroids[p].cx)
             .attr("cy", (p) => centroids[p].cy)
-            .attr("fill", (p) => blueScale(getActivityOfPart(p)))
+            // .attr("fill", (p) => blueScale(getActivityOfPart(p)))
             .each(function (part) {
                 const nodesOfPart = cellNodes.filter(n => filterNodesOfPart(n, part))
                 const xExtent = d3.extent(nodesOfPart.data(), d => d.x) as [number, number];
@@ -414,7 +448,7 @@ export function initGraph(
 
         // update cell nodes position according to their centroids
         cellNodes
-            .attr("fill", (n) => blueScale(getActivityOfNode(n)))
+            // .attr("fill", (n) => blueScale(getActivityOfNode(n)))
             .each(function (d) {
                 const cx = centroids[d.part].cx;
                 const cy = centroids[d.part].cy;
@@ -465,8 +499,4 @@ export function initGraph(
             ]);
         }
     }
-}
-
-export function updateGraph(codeExecution: CodeExecution[]) {
-    console.log("new activity")
 }
