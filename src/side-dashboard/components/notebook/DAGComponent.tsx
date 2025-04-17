@@ -39,12 +39,10 @@ const DAGComponent = (props: { notebookId: string }) => {
     }, [refreshRequired]);
 
     return (
-        <div className="row justify-content-center">
-            <ChartContainer
-                PassedComponent={<GraphComponent nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
-                title="Notebook DAG"
-            />
-        </div>
+        <ChartContainer
+            PassedComponent={<GraphComponent nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
+            title="Notebook DAG"
+        />
     );
 }
 

@@ -1,20 +1,23 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { CodeExecution, JSONGraph } from "../../../utils/interfaces";
 import Loader from "../placeholder/Loader";
-import { initGraph, updateGraph } from "./GraphD3";
+import { NotebookD3Graph } from "./GraphD3";
 
 
 const GraphComponent = (props: ({ nxJsonData: JSONGraph, codeExecution: CodeExecution[] })) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
-
+    const [nbd3Graph, setNbD3Graph] = useState<NotebookD3Graph | null>(null);
     useEffect(() => {
+        console.log(props.nxJsonData);
         if (containerRef.current) {
-            initGraph(containerRef.current, props.nxJsonData, props.codeExecution);
+            setNbD3Graph(new NotebookD3Graph(props.nxJsonData, containerRef.current));
         }
     }, [props.nxJsonData]);  // only watch code execution updates since nxJsonGraph is static
 
     useEffect(() => {
-        updateGraph(props.codeExecution);
+        if (nbd3Graph) {
+            nbd3Graph.updateGraph(props.codeExecution);
+        }
     }, [props.codeExecution]);
 
     return (
