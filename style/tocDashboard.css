@@ -205,6 +205,11 @@
   word-wrap: break-word;
 }
 
+.dashboard-toc-react-component:hover {
+  filter: brightness(1.2);
+  transform: scale(1.05);
+}
+
 .dashboard-toc-react-text {
   width: 100%;
   color: var(--jp-inverse-layout-color0);

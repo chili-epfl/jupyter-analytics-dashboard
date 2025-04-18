@@ -43,6 +43,7 @@ export async function activateDashboardPlugins(
   // initializing sidebar widgets
   const visuDashboardPanel = new VisuDashboardPanel(
     panelManager,
+    app.commands,
     rendermime.sanitizer
   );
   const tocDashboardPanel = new TocDashboardPanel(
@@ -120,6 +121,48 @@ export async function activateDashboardPlugins(
       // open the dashboard
       if (!visuDashboardPanel.isVisible) {
         app.shell.activateById(visuDashboardPanel.id);
+      }
+    }
+  });
+
+  // add the command to scroll to a cell
+  app.commands.addCommand(CommandIDs.dashboardScrollToCell, {
+    label: 'Dashboard Scroll to Cell',
+    caption: 'Notebook Cell Navigation from Dashboards',
+    execute: args => {
+      if (args['from'] === 'Visu') {
+        switch (args['source']) {
+          case 'CodeExecComponent':
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'CODE_VISU_CLICK'
+            });
+            break;
+          case 'CellDurationComponent':
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'TIME_VISU_CLICK'
+            });
+            break;
+          default:
+            console.log(
+              `${APP_ID}: dashboardScrollToCell command called from an unknown source.`
+            );
+        }
+
+        const notebook = panelManager.panel?.content;
+        if (!notebook) {
+          return;
+        }
+
+        const cellIndex = notebook.widgets.findIndex(
+          cell => cell.model.id === args['cell_id']
+        );
+        if (cellIndex !== -1) {
+          notebook.activeCellIndex = cellIndex;
+          notebook.mode = 'command';
+          notebook.scrollToItem(cellIndex, 'center');
+        }
       }
     }
   });

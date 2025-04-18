@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Message } from '@lumino/messaging';
+import { CommandRegistry } from '@lumino/commands';
 import DashboardPanel from './DashboardPanel';
 import { PanelManager } from './PanelManager';
 import PageRouter from '../side-dashboard/PageRouter';
@@ -8,7 +9,11 @@ import { IRenderMime } from '@jupyterlab/rendermime';
 import { InteractionRecorder } from '../utils/interactionRecorder';
 
 export class VisuDashboardPanel extends DashboardPanel {
-  constructor(panelManager: PanelManager, sanitizer: IRenderMime.ISanitizer) {
+  constructor(
+    panelManager: PanelManager,
+    commands: CommandRegistry,
+    sanitizer: IRenderMime.ISanitizer
+  ) {
     super(panelManager);
 
     this.addClass('dashboard-react-widget');
@@ -19,6 +24,7 @@ export class VisuDashboardPanel extends DashboardPanel {
     this.node.setAttribute('role', 'region');
     this.node.setAttribute('aria-label', 'Side dashboard section');
 
+    this._commands = commands;
     this._sanitizer = sanitizer;
   }
 
@@ -44,6 +50,7 @@ export class VisuDashboardPanel extends DashboardPanel {
         <PageRouter
           notebookId={notebookId}
           notebookName={panel.sessionContext.name}
+          commands={this._commands}
           sanitizer={this._sanitizer}
         />
       );
@@ -52,5 +59,6 @@ export class VisuDashboardPanel extends DashboardPanel {
     }
   }
 
+  private _commands: CommandRegistry;
   private _sanitizer: IRenderMime.ISanitizer;
 }

@@ -34,7 +34,7 @@ export const activateProtectedPlugins = (
   rendermime: IRenderMimeRegistry,
   settings: ISettingRegistry.ISettings | undefined
 ) => {
-  // emit the returned authorized notebooks to know which ones one to disable in telemetry extension
+  // emit the returned authorized notebooks to know which ones to disable in telemetry extension
   emitAuthNotebooksToDisableToTelemetry(loginJSON.auth_notebooks);
 
   if (!ARE_DASHBOARD_PLUGINS_ACTIVATED) {

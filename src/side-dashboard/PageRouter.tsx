@@ -6,6 +6,7 @@ import Cell from './pages/Cell';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import { IRenderMime } from '@jupyterlab/rendermime';
+import { CommandRegistry } from '@lumino/commands';
 
 // register needed for react-chartjs-2 to work
 import { Chart, registerables } from 'chart.js';
@@ -15,6 +16,7 @@ Chart.register(...registerables);
 interface IRouterProps {
   notebookId: string;
   notebookName: string;
+  commands: CommandRegistry;
   sanitizer: IRenderMime.ISanitizer;
 }
 
@@ -43,6 +45,7 @@ const PageRouter = (props: IRouterProps): JSX.Element => {
               <Notebook
                 notebookId={props.notebookId}
                 notebookName={props.notebookName}
+                commands={props.commands}
               />
             );
           case 'Cell':

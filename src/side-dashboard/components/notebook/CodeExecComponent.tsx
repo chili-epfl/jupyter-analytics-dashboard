@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { ChartData } from 'chart.js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChartData, ChartOptions } from 'chart.js';
 import ChartContainer from './ChartContainer';
 import { Bar } from 'react-chartjs-2';
-import { codeExecOptions } from '../../../utils/chartOptions';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import { NotebookCell } from '../../../redux/types';
 import {
   fetchWithCredentials,
   generateQueryArgsString
 } from '../../../utils/utils';
 import { BACKEND_API_URL } from '../../..';
+import { CommandIDs } from '../../../utils/constants';
+import { baseChartOptions } from '../../../utils/chartOptions';
 
-const CodeExecComponent = (props: { notebookId: string }) => {
+import { CommandRegistry } from '@lumino/commands';
+
+const CodeExecComponent = (props: {
+  notebookId: string;
+  commands: CommandRegistry;
+}) => {
   const [codeExecData, setCodeExecData] = useState<ChartData<'bar'>>({
     labels: [],
     datasets: []
@@ -27,6 +34,19 @@ const CodeExecComponent = (props: { notebookId: string }) => {
     (state: RootState) => state.commondashboard.notebookCells
   );
 
+  // filter elements of notebookCells that are of type 'code'
+  const codeCells = useMemo(() => {
+    return notebookCells?.filter(cell => cell.cellType === 'code') || [];
+  }, [notebookCells]);
+
+  const handleCellClick = (cellId: string) => {
+    props.commands.execute(CommandIDs.dashboardScrollToCell, {
+      from: 'Visu',
+      source: 'CodeExecComponent',
+      cell_id: cellId
+    });
+  };
+
   // fetching execution data
   useEffect(() => {
     fetchWithCredentials(
@@ -34,10 +54,6 @@ const CodeExecComponent = (props: { notebookId: string }) => {
     )
       .then(response => response.json())
       .then(data => {
-        // filter elements of notebookCells that are of type 'code'
-        const codeCells =
-          notebookCells?.filter(cell => cell.cellType === 'code') || [];
-
         const chartData: ChartData<'bar'> = {
           labels: Array.from(
             { length: codeCells.length },
@@ -49,21 +65,31 @@ const CodeExecComponent = (props: { notebookId: string }) => {
               data: Array(codeCells.length).fill(null),
               backgroundColor: 'rgba(51, 187, 238, 0.3)',
               borderColor: 'rgba(51, 187, 238, 0.3)',
-              borderWidth: 1
+              borderWidth: 1,
+              hoverBackgroundColor: 'rgba(51, 187, 238, 0.8)',
+              hoverBorderColor: 'rgba(51, 187, 238, 0.8)',
+              hoverBorderWidth: 1,
+              hidden: true // hide the clicks dataset by default
             },
             {
               label: 'executions',
               data: Array(codeCells.length).fill(null),
               backgroundColor: 'rgba(0, 119, 187, 0.6)',
               borderColor: 'rgba(0, 119, 187, 0.6)',
-              borderWidth: 1
+              borderWidth: 1,
+              hoverBackgroundColor: 'rgba(0, 119, 187, 0.9)',
+              hoverBorderColor: 'rgba(0, 119, 187, 0.9)',
+              hoverBorderWidth: 1
             },
             {
               label: 'executions without errors',
               data: Array(codeCells.length).fill(null),
               backgroundColor: 'rgba(0, 153, 136, 0.9)',
               borderColor: 'rgba(0, 153, 136, 0.9)',
-              borderWidth: 1
+              borderWidth: 1,
+              hoverBackgroundColor: 'rgba(0, 100, 90, 1)',
+              hoverBorderColor: 'rgba(0, 100, 90, 1)',
+              hoverBorderWidth: 1
             }
           ]
         };
@@ -89,6 +115,8 @@ const CodeExecComponent = (props: { notebookId: string }) => {
       });
   }, [dashboardQueryArgsRedux, refreshRequired]);
 
+  const codeExecOptions = getCodeExecOptions(codeCells, handleCellClick);
+
   return (
     <ChartContainer
       PassedComponent={<Bar data={codeExecData} options={codeExecOptions} />}
@@ -96,5 +124,49 @@ const CodeExecComponent = (props: { notebookId: string }) => {
     />
   );
 };
+
+const getCodeExecOptions = (
+  codeCells: NotebookCell[] | null,
+  onClickCell: (cellId: string) => void
+): ChartOptions<'bar'> => ({
+  ...baseChartOptions,
+  plugins: {
+    ...baseChartOptions.plugins,
+    legend: {
+      ...baseChartOptions.plugins?.legend,
+      position: 'top'
+    },
+    tooltip: {
+      callbacks: {
+        title: (tooltipItem: any) => `Code cell ${tooltipItem[0].label}`
+      }
+    }
+  },
+  scales: {
+    x: {
+      ...baseChartOptions.scales?.x,
+      title: {
+        ...baseChartOptions.scales?.x?.title,
+        text: 'Code cell'
+      }
+    },
+    y: {
+      ...baseChartOptions.scales?.y,
+      title: {
+        ...baseChartOptions.scales?.y?.title,
+        text: 'Cumulated total across all users'
+      }
+    }
+  },
+  onClick: (_event, elements) => {
+    if (elements.length > 0) {
+      const index = elements[0].index;
+      const cellId = codeCells?.[index]?.id;
+      if (cellId) {
+        onClickCell(cellId);
+      }
+    }
+  }
+});
 
 export default CodeExecComponent;

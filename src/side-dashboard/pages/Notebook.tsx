@@ -5,9 +5,12 @@ import CodeExecComponent from '../components/notebook/CodeExecComponent';
 import GroupDropDown from '../components/buttons/GroupDropDown';
 import CellDurationComponent from '../components/notebook/CellDurationComponent';
 
+import { CommandRegistry } from '@lumino/commands';
+
 interface INotebookPageProps {
   notebookId: string;
   notebookName: string;
+  commands: CommandRegistry;
 }
 
 const Notebook = (props: INotebookPageProps): JSX.Element => {
@@ -22,9 +25,15 @@ const Notebook = (props: INotebookPageProps): JSX.Element => {
       </div>
       <Row>
         <Col>
-          <CodeExecComponent notebookId={props.notebookId} />
+          <CodeExecComponent
+            notebookId={props.notebookId}
+            commands={props.commands}
+          />
 
-          <CellDurationComponent notebookId={props.notebookId} />
+          <CellDurationComponent
+            notebookId={props.notebookId}
+            commands={props.commands}
+          />
         </Col>
       </Row>
     </>

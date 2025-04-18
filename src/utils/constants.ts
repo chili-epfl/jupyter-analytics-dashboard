@@ -14,6 +14,8 @@ export const TOC_DASHBOARD_RENDER_TIMEOUT = 1000;
 export namespace CommandIDs {
   export const dashboardOpenDashboardPlayback = `${APP_ID}:dashboard-open-playback`;
 
+  export const dashboardScrollToCell = `${APP_ID}:dashboard-scroll-to-cell`;
+
   export const uploadNotebook = `${APP_ID}:dashboard-upload-notebook`;
 
   export const copyDownloadLink = `${APP_ID}:dashboard-copy-download-link`;
