@@ -21,6 +21,10 @@ export namespace CommandIDs {
   export const copyDownloadLink = `${APP_ID}:dashboard-copy-download-link`;
 
   export const openLogin = `${APP_ID}:dashboard-open-login`;
+
+  export const pushCellUpdate = `${APP_ID}:dashboard-push-cell-update`;
+
+  export const pushNotebookUpdate = `${APP_ID}:dashboard-push-notebook-update`;
 }
 
 export const visuIconClass = 'jp-icon3';

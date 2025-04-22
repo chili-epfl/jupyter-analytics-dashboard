@@ -3,25 +3,27 @@ import {
   ILayoutRestorer,
   JupyterFrontEnd
 } from '@jupyterlab/application';
+import { NotebookPanel } from '@jupyterlab/notebook';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { Widget } from '@lumino/widgets';
+
 import { analyticsIcon } from '../icons';
+import { RegistrationState } from '../utils/interfaces';
+import { InteractionRecorder } from '../utils/interactionRecorder';
 import { APP_ID, visuIconClass, CommandIDs } from '../utils/constants';
 import { store, AppDispatch } from '../redux/store';
 import {
   navigateToNotebook,
   navigateToCell
 } from '../redux/reducers/SideDashboardReducer';
-import { NotebookPanel } from '@jupyterlab/notebook';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PanelManager } from '../dashboard-widgets/PanelManager';
 import { VisuDashboardPanel } from '../dashboard-widgets/VisuDashboardPanel';
 import { TocDashboardPanel } from '../dashboard-widgets/TocDashboardPanel';
 // import { ChatDashboardPanel } from '../dashboard-widgets/ChatDashboardPanel';
-import { InteractionRecorder } from '../utils/interactionRecorder';
-import { addDashboardNotebookExtensions } from '../widget-extensions';
 import { PlaybackWidget } from '../dashboard-widgets/PlaybackWidget';
-import { Widget } from '@lumino/widgets';
-import { RegistrationState } from '../utils/interfaces';
+import { addDashboardNotebookExtensions } from '../widget-extensions';
+import { activatePushNotebookUpdatePlugin } from './pushNotebookUpdate';
 
 const dispatch = store.dispatch as AppDispatch;
 
@@ -61,6 +63,9 @@ export async function activateDashboardPlugins(
   });
 
   // const chatDashboardPanel = new ChatDashboardPanel(panelManager);
+
+  // add the plugin to push notebook updates to the connected students
+  activatePushNotebookUpdatePlugin(app, panelManager);
 
   // add the widgets to the sidebars
   labShell.add(visuDashboardPanel, 'right', { rank: 1000 });
