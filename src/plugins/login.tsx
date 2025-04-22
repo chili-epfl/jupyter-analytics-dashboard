@@ -138,6 +138,9 @@ const LoginDialogBox = (props: {
           <BoxArrowUpRight className="dashboard-loginbox-signup-icon" />
         </a>
       </div>
+      <div className="dashboard-loginbox-current-username">
+        {`Current User: ${localStorage.getItem(DASHBOARD_USERNAME_KEY)}`}
+      </div>
       <div className="dashboard-loginbox-response-container">
         {loading ? (
           <div className="dashboard-loginbox-spinner-container">
