@@ -6,11 +6,13 @@ import { APP_ID, CommandIDs } from '../utils/constants';
 import { BACKEND_API_URL, CURRENT_NOTEBOOK_ID } from '..';
 import { PanelManager } from '../dashboard-widgets/PanelManager';
 
-export function activatePushNotebookUpdatePlugin (
+export function activatePushNotebookUpdatePlugin(
   app: JupyterFrontEnd,
   panelManager: PanelManager
 ) {
-  console.log(`JupyterLab extension ${APP_ID}: push-update plugin is activated!`);
+  console.log(
+    `JupyterLab extension ${APP_ID}: push-update plugin is activated!`
+  );
 
   app.restored.then(() => {
     app.commands.addCommand(CommandIDs.pushCellUpdate, {
@@ -48,7 +50,7 @@ export function activatePushNotebookUpdatePlugin (
       selector: '.jp-Notebook'
     });
   });
-};
+}
 
 const pushCellUpdate = async (panelManager: PanelManager) => {
   if (!CURRENT_NOTEBOOK_ID) {
@@ -97,23 +99,26 @@ const pushNotebookUpdate = async (panelManager: PanelManager) => {
   }
 };
 
-const pushUpdateToStudents = async (panelManager: PanelManager, message: any) => {
+const pushUpdateToStudents = async (
+  panelManager: PanelManager,
+  message: any
+) => {
   if (!panelManager.websocketManager) {
     console.error('No websocket manager found');
     return;
   }
 
   fetchWithCredentials(
-        `${BACKEND_API_URL}/dashboard/${CURRENT_NOTEBOOK_ID}/connectedstudents`
-      )
-      .then(response => response.json())
-      .then((studentsList: string[]) => {
-        if (studentsList.length === 0) {
-          console.log('No connected students');
-          return;
-        }
-        for (const userId of studentsList) {
-          panelManager.websocketManager.sendMessageToUser(userId, message);
-        }
-      });
+    `${BACKEND_API_URL}/dashboard/${CURRENT_NOTEBOOK_ID}/connectedstudents`
+  )
+    .then(response => response.json())
+    .then((studentsList: string[]) => {
+      if (studentsList.length === 0) {
+        console.log('No connected students');
+        return;
+      }
+      for (const userId of studentsList) {
+        panelManager.websocketManager.sendMessageToUser(userId, message);
+      }
+    });
 };

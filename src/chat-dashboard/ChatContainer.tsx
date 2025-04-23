@@ -46,7 +46,10 @@ const ChatContainer = (props: {
       <div style={{ display: 'flex', width: '100%', paddingBottom: '15px' }}>
         <div className="chat-title">Chat with Users</div>
         <div className="breadcrumb-buttons-container">
-          <Button className="dashboard-button" onClick={() => requestConnectedUsers()}>
+          <Button
+            className="dashboard-button"
+            onClick={() => requestConnectedUsers()}
+          >
             <RefreshLogo className="dashboard-icon" />
           </Button>
         </div>
@@ -69,10 +72,13 @@ const ChatContainer = (props: {
                   type="text"
                   placeholder="Send a chat..."
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={e => setMessage(e.target.value)}
                   className="chat-input"
                 />
-                <button onClick={() => sendMessage(selectedUser)} className="chat-send-button">
+                <button
+                  onClick={() => sendMessage(selectedUser)}
+                  className="chat-send-button"
+                >
                   <runIcon.react elementSize="large" className="send-icon" />
                 </button>
               </div>
