@@ -2,11 +2,15 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 4.0.21
+
+Adding a real-time sync functionality that allows the teacher to push notebook and cell-level updates to the connected students.
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.20
 
 No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.19
 
