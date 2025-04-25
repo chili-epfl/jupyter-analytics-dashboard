@@ -20,6 +20,7 @@ const DAGComponent = (props: {
         graph: null
     });
 
+    const [isDagEnabled, setIsDagEnabled] = useState<boolean>(true);
     const dashboardQueryArgsRedux = useSelector(
         (state: RootState) => state.commondashboard.dashboardQueryArgs
     );
@@ -31,10 +32,22 @@ const DAGComponent = (props: {
         fetchWithCredentials(
             `${BACKEND_API_URL}/dashboard/${props.notebookId}/dag`
         )
-            .then(response => response.json())
-            .then(newNxJsonData => setnxJsonData(newNxJsonData));
-    }, [])
+            .then(response => {
+                if (response.status == 404) {
+                    setIsDagEnabled(false);
+                }
+                return response.json();
+            })
+            .then(newNxJsonData => {
+                if (isDagEnabled) {
+                    setnxJsonData(newNxJsonData)
+                }
+            });
+    }, []);
     useEffect(() => {
+        if (!isDagEnabled) {
+            return;
+        }
         fetchWithCredentials(
             `${BACKEND_API_URL}/dashboard/${props.notebookId}/user_code_execution?${generateQueryArgsString(dashboardQueryArgsRedux, props.notebookId)}`
         )
@@ -42,11 +55,14 @@ const DAGComponent = (props: {
             .then(newCodeExecution => setCodeExecution(newCodeExecution));
     }, [refreshRequired]);
 
-    return (
-        <ChartContainer
-            PassedComponent={<GraphComponent commands={props.commands} nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
-            title="Notebook DAG"
-        />
+    return (<>
+        {isDagEnabled &&
+            <ChartContainer
+                PassedComponent={<GraphComponent commands={props.commands} nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
+                title="Notebook DAG"
+            />
+        }
+    </>
     );
 }
 
