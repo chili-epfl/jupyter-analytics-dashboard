@@ -1,7 +1,7 @@
 import { JupyterFrontEnd } from "@jupyterlab/application";
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { fileUploadIcon } from "@jupyterlab/ui-components";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
@@ -57,8 +57,10 @@ function uploadNotebook(
 const UploadNotebookPopup = (props: {
   app: JupyterFrontEnd,
 }) => {
+  const formRef = useRef<HTMLInputElement>(null);  // main notebook form node
 
   const [dagEnabled, setDagEnabled] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [resultingDag, setResultingDag] = useState<JSONGraph>();
   const [notebookFile, setNotebookFile] = useState<File | null>(null);
   const [solutionNotebookFile, setSolutionNotebookFile] = useState<File | null>(null);
@@ -72,12 +74,14 @@ const UploadNotebookPopup = (props: {
     } else {
       setNotebookFile(e.target.files[0]);
     }
+    setErrorMessage("");  // reset error message
   }
 
   async function onSubmit() {
     if (!notebookFile) {
       return;
     }
+    setErrorMessage("");  // hide any previous error
     const notebookName = notebookFile.name;
     const notebookContent = JSON.parse(await notebookFile.text());
 
@@ -88,13 +92,8 @@ const UploadNotebookPopup = (props: {
       })
       .catch(error => {
         // handle error while uploading
-        showDialog({
-          title: notebookName,
-          body: `Error uploading the file:\n${error}`,
-          buttons: [Dialog.okButton()]
-        }).catch(e => console.log(e));
+        setErrorMessage(error);
       });
-    console.log(unianalyticsId);
 
     if (!solutionNotebookFile) {
       return;
@@ -103,22 +102,32 @@ const UploadNotebookPopup = (props: {
     const solutionNotebookContent = JSON.parse(await solutionNotebookFile.text());
     uploadNotebook(solutionNotebookContent, solutionNotebookName, true, unianalyticsId)
       .then((uploadResponse: JSONGraph) => {
-        console.log(uploadResponse);
         setResultingDag(uploadResponse)
       });
   }
+  useEffect(() => {
+    if (formRef.current) {
+      setTimeout(() => {
+        // @ts-ignore
+        formRef.current.querySelector("#notebook-form")?.classList.remove('jp-mod-styled')
+      }, 100);
+      // jupyter auto applies some class that messes up with bootstrap.
+    }
+  }, []);
 
   return (
     <div className="dashboard-unbpopup-content-container">
       <Container fluid>
         <Row className="align-items-center">
           <Col md={4} className="d-flex align-items-center">
-            Select a notebook.
+            Select a notebook :
           </Col>
           <Col md={8}>
-            <Form.Group controlId="notebook-form" onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFileSelected(e, false)}>
-              <Form.Control type="file" />
-            </Form.Group>
+            <div ref={formRef}>
+              <Form.Group controlId="notebook-form" onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFileSelected(e, false)}>
+                <Form.Control type="file" />
+              </Form.Group>
+            </div>
           </Col>
         </Row>
         <hr></hr>
@@ -129,20 +138,20 @@ const UploadNotebookPopup = (props: {
               </Form.Check>
             </Form>
           </Col>
-          <Col onClick={(_) => setDagEnabled(!dagEnabled)}>
-            Enable DAG Generation
+          <Col onClick={(_) => setDagEnabled(!dagEnabled)} style={{ cursor: "pointer" }}>
+            (Optional) Enable <abbr title="A notebook DAG (Directed Acyclic Graph) aims at showing dependencies between the cells and/or the parts extracted from the associated completed notebook (solution).">DAG Generation</abbr>
           </Col>
         </Row>
         {dagEnabled &&
-          <Row>
+          <div>
             <Row>
               <Col>
-                <span>For DAG generation, please upload the solution notebook as well so that the extension can derive cell dependencies.</span>
+                <span>For DAG generation, please include the solution notebook as well so that the extension can derive cell and parts dependencies from the code.</span>
               </Col>
             </Row>
-            <Row className="align-items-center">
+            <Row className="align-items-center mt-1 mb-4">
               <Col md={4} className="d-flex align-items-center">
-                Select the corresponding solution notebook.
+                Select the solution notebook :
               </Col>
               <Col md={8}>
                 <Form.Group controlId="solution-notebook-form" onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFileSelected(e, true)}>
@@ -150,17 +159,16 @@ const UploadNotebookPopup = (props: {
                 </Form.Group>
               </Col>
             </Row>
-          </Row>}
-        {/* {resultingDag &&
-          <Row>
-            <ChartContainer PassedComponent={<GraphComponent nxJsonData={resultingDag}></GraphComponent>} title="Notebook DAG" />
-          </Row>} */}
-        <Row>
+          </div>}
+        {errorMessage !== "" && <Row className="mt-3 mb-3">
+          <Col md={12} className="text-wrap">{errorMessage}</Col>
+        </Row>}
+        <Row className="mt-3">
           <Button
             variant="primary"
             type="submit"
             onClick={onSubmit}
-            disabled={!notebookFile}
+            disabled={!notebookFile || (dagEnabled && !solutionNotebookFile)}
             className="dashboard-loginbox-btn">
             Upload
           </Button>
@@ -173,7 +181,6 @@ const UploadNotebookPopup = (props: {
 export function activateUploadNotebookPopup(
   app: JupyterFrontEnd,
 ) {
-  console.log("Adding an upload notebook visualization");
 
   app.commands.addCommand(CommandIDs.uploadNotebookPopup, {
     label: '[V2] Upload Notebook to unianalytics',
