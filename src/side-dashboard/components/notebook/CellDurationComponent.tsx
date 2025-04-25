@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { BubbleDataPoint, ChartData } from 'chart.js';
+import React, { useEffect, useRef, useState } from 'react';
+import { BubbleDataPoint, ChartData, ChartOptions } from 'chart.js';
 import ChartContainer from './ChartContainer';
 import { Bubble } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import { NotebookCell } from '../../../redux/types';
 import {
   fetchWithCredentials,
   generateQueryArgsString
 } from '../../../utils/utils';
 import { BACKEND_API_URL } from '../../..';
-import { NotebookCell } from '../../../redux/types';
-import {
-  MAX_DURATION_TIME,
-  cellDurationOptions
-} from '../../../utils/chartOptions';
+import { CommandIDs } from '../../../utils/constants';
+import { baseChartOptions } from '../../../utils/chartOptions';
+
+import { CommandRegistry } from '@lumino/commands';
 
 // extend the Chart.js point definition to pass additional properties and use them in the tooltip labels
 interface ICustomPoint extends BubbleDataPoint {
@@ -24,7 +24,10 @@ interface ICustomPoint extends BubbleDataPoint {
   totalCount: number;
 }
 
-const CellDurationComponent = (props: { notebookId: string }) => {
+const CellDurationComponent = (props: {
+  notebookId: string;
+  commands: CommandRegistry;
+}) => {
   const [cellDurationData, setCellDurationData] = useState<ChartData<'bubble'>>(
     {
       labels: [],
@@ -41,6 +44,20 @@ const CellDurationComponent = (props: { notebookId: string }) => {
   const notebookCells = useSelector(
     (state: RootState) => state.commondashboard.notebookCells
   );
+
+  const notebookCellsRef = useRef<typeof notebookCells | null>(null);
+
+  const handleCellClick = (cellId: string) => {
+    props.commands.execute(CommandIDs.dashboardScrollToCell, {
+      from: 'Visu',
+      source: 'CellDurationComponent',
+      cell_id: cellId
+    });
+  };
+
+  useEffect(() => {
+    notebookCellsRef.current = notebookCells;
+  }, [notebookCells]);
 
   // fetching execution data
   useEffect(() => {
@@ -97,6 +114,11 @@ const CellDurationComponent = (props: { notebookId: string }) => {
       });
   }, [dashboardQueryArgsRedux, refreshRequired]);
 
+  const cellDurationOptions = getCellDurationOptions(
+    notebookCellsRef,
+    handleCellClick
+  );
+
   return (
     <ChartContainer
       PassedComponent={
@@ -105,6 +127,83 @@ const CellDurationComponent = (props: { notebookId: string }) => {
       title="Time spent on each cell across users"
     />
   );
+};
+
+const MAX_DURATION_TIME = 1800; // in seconds, 1800s = 30min
+const OVER_MAX_DURATION_STR = `> ${Math.floor(MAX_DURATION_TIME / 60)}'`;
+
+const getCellDurationOptions = (
+  notebookCellsRef: React.RefObject<NotebookCell[] | null>,
+  onClickCell: (cellId: string) => void
+): ChartOptions<'bubble'> => ({
+  ...baseChartOptions,
+  plugins: {
+    ...baseChartOptions.plugins,
+    legend: {
+      ...baseChartOptions.plugins?.legend,
+      display: true,
+      labels: {
+        ...baseChartOptions.plugins?.legend?.labels,
+        usePointStyle: true
+      }
+    },
+    tooltip: {
+      ...baseChartOptions.plugins?.tooltip,
+      usePointStyle: true,
+      callbacks: {
+        title: (tooltipItem: any) => `Cell ${tooltipItem[0].raw.x}`,
+        label: (tooltipItem: any) => [
+          `${tooltipItem.raw.userCount} of ${tooltipItem.raw.totalCount} users focused on this cell`,
+          `Average focus time: ${formatTime(tooltipItem.raw.y)}`
+        ]
+      }
+    }
+  },
+  scales: {
+    x: {
+      ...baseChartOptions.scales?.x,
+      type: 'category' as const,
+      title: {
+        ...baseChartOptions.scales?.x?.title,
+        text: 'Cell (markdown & code)'
+      }
+    },
+    y: {
+      ...baseChartOptions.scales?.y,
+      // max: MAX_DURATION_TIME + Math.floor(0.1 * MAX_DURATION_TIME), // don't display durations > MAX_DURATION_TIME, and add some margin above the y-axis
+      // grace: 20, // to add additional padding top and bottom of y-axis
+      ticks: {
+        ...baseChartOptions.scales?.y?.ticks,
+        count: 6,
+        callback: (value: string | number) =>
+          typeof value === 'number' ? formatTime(value) : value
+      },
+      title: {
+        ...baseChartOptions.scales?.y?.title,
+        text: 'Average time spent on the cell'
+      }
+    }
+  },
+  onClick: (_event, elements) => {
+    if (elements.length > 0) {
+      const index = elements[0].index;
+      const cellId = notebookCellsRef.current?.[index]?.id;
+      if (cellId) {
+        onClickCell(cellId);
+      }
+    }
+  }
+});
+
+const formatTime = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const secondsLeft = seconds % 60;
+
+  if (seconds >= MAX_DURATION_TIME) {
+    return OVER_MAX_DURATION_STR;
+  } else {
+    return `${minutes > 0 ? minutes + "'" : ''}${secondsLeft.toFixed(0)}"`;
+  }
 };
 
 export default CellDurationComponent;

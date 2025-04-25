@@ -6,9 +6,12 @@ import CellDurationComponent from '../components/notebook/CellDurationComponent'
 import CodeExecComponent from '../components/notebook/CodeExecComponent';
 import DAGComponent from '../components/notebook/DAGComponent';
 
+import { CommandRegistry } from '@lumino/commands';
+
 interface INotebookPageProps {
   notebookId: string;
   notebookName: string;
+  commands: CommandRegistry;
 }
 
 const Notebook = (props: INotebookPageProps): JSX.Element => {
@@ -23,12 +26,16 @@ const Notebook = (props: INotebookPageProps): JSX.Element => {
       </div>
       <Row>
         <Col>
-          <CodeExecComponent notebookId={props.notebookId} />
-
-          <CellDurationComponent notebookId={props.notebookId} />
-
+          <CodeExecComponent
+            notebookId={props.notebookId}
+            commands={props.commands}
+          />
+          <CellDurationComponent
+            notebookId={props.notebookId}
+            commands={props.commands}
+          />
           <DAGComponent notebookId={props.notebookId} />
-        </Col>
+          </Col>
       </Row>
     </>
   );

@@ -225,12 +225,14 @@ button.dashboard-button {
   border-radius: 2px;
   margin-bottom: 6px;
   font-size: 11px;
-  color: white;
+  color: var(--jp-ui-font-color1);
   cursor: pointer;
+  background-color: var(--jp-layout-color0);
+  transition: background-color 0.2s ease;
 }
 
 .connectionid-container:hover {
-  background-color: #424242;
+  background-color: var(--jp-layout-color2); /* subtle contrast on hover */
 }
 
 .text-with-ellipsis {
@@ -244,6 +246,50 @@ button.dashboard-button {
 .send-icon {
   display: flex;
   justify-content: center;
+}
+
+.chat-title {
+  color: var(--jp-ui-font-color1);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.chat-container {
+  height: 50%;
+  border-top: 1px solid var(--jp-border-color0);
+  padding-top: 10px;
+}
+
+.chat-with-label {
+  color: var(--jp-ui-font-color1);
+  padding: 5px 0 15px;
+  font-weight: 400;
+  flex: 1;
+}
+
+.chat-input-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--jp-border-color0);
+  border-radius: 2px;
+  padding: 2px 0 2px 3px;
+}
+
+.chat-input {
+  flex: 1;
+  color: var(--jp-ui-font-color1);
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--jp-border-color0);
+  outline: none;
+}
+
+.chat-send-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
 }
 
 .custom-dropdown-container {
@@ -499,11 +545,18 @@ button.dashboard-playback-time-button-container,
   margin-left: 5px;
 }
 
+.dashboard-loginbox-current-username {
+  margin-top: 15px;
+  text-align: center;
+}
+
 .dashboard-loginbox-response-container {
   height: 50px;
-  margin: 20px 0 10px;
+  margin: 15px 0;
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .dashboard-loginbox-spinner-container {
@@ -518,7 +571,8 @@ button.dashboard-playback-time-button-container,
 }
 
 .dashboard-loginbox-response {
-  font-size: 13px;
+  font-size: 14px;
+  color: var(--jp-brand-color1);
 }
 
 .dashboard-loginbox-error-text {

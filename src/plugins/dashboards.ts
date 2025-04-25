@@ -3,25 +3,27 @@ import {
   ILayoutRestorer,
   JupyterFrontEnd
 } from '@jupyterlab/application';
+import { NotebookPanel } from '@jupyterlab/notebook';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { Widget } from '@lumino/widgets';
+
 import { analyticsIcon } from '../icons';
+import { RegistrationState } from '../utils/interfaces';
+import { InteractionRecorder } from '../utils/interactionRecorder';
 import { APP_ID, visuIconClass, CommandIDs } from '../utils/constants';
 import { store, AppDispatch } from '../redux/store';
 import {
   navigateToNotebook,
   navigateToCell
 } from '../redux/reducers/SideDashboardReducer';
-import { NotebookPanel } from '@jupyterlab/notebook';
-import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
-import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { PanelManager } from '../dashboard-widgets/PanelManager';
 import { VisuDashboardPanel } from '../dashboard-widgets/VisuDashboardPanel';
 import { TocDashboardPanel } from '../dashboard-widgets/TocDashboardPanel';
 // import { ChatDashboardPanel } from '../dashboard-widgets/ChatDashboardPanel';
-import { InteractionRecorder } from '../utils/interactionRecorder';
-import { addDashboardNotebookExtensions } from '../widget-extensions';
 import { PlaybackWidget } from '../dashboard-widgets/PlaybackWidget';
-import { Widget } from '@lumino/widgets';
-import { RegistrationState } from '../utils/interfaces';
+import { addDashboardNotebookExtensions } from '../widget-extensions';
+import { activatePushNotebookUpdatePlugin } from './pushNotebookUpdate';
 
 const dispatch = store.dispatch as AppDispatch;
 
@@ -43,6 +45,7 @@ export async function activateDashboardPlugins(
   // initializing sidebar widgets
   const visuDashboardPanel = new VisuDashboardPanel(
     panelManager,
+    app.commands,
     rendermime.sanitizer
   );
   const tocDashboardPanel = new TocDashboardPanel(
@@ -60,6 +63,9 @@ export async function activateDashboardPlugins(
   });
 
   // const chatDashboardPanel = new ChatDashboardPanel(panelManager);
+
+  // add the plugin to push notebook updates to the connected students
+  activatePushNotebookUpdatePlugin(app, panelManager);
 
   // add the widgets to the sidebars
   labShell.add(visuDashboardPanel, 'right', { rank: 1000 });
@@ -120,6 +126,48 @@ export async function activateDashboardPlugins(
       // open the dashboard
       if (!visuDashboardPanel.isVisible) {
         app.shell.activateById(visuDashboardPanel.id);
+      }
+    }
+  });
+
+  // add the command to scroll to a cell
+  app.commands.addCommand(CommandIDs.dashboardScrollToCell, {
+    label: 'Dashboard Scroll to Cell',
+    caption: 'Notebook Cell Navigation from Dashboards',
+    execute: args => {
+      if (args['from'] === 'Visu') {
+        switch (args['source']) {
+          case 'CodeExecComponent':
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'CODE_VISU_CLICK'
+            });
+            break;
+          case 'CellDurationComponent':
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'TIME_VISU_CLICK'
+            });
+            break;
+          default:
+            console.log(
+              `${APP_ID}: dashboardScrollToCell command called from an unknown source.`
+            );
+        }
+
+        const notebook = panelManager.panel?.content;
+        if (!notebook) {
+          return;
+        }
+
+        const cellIndex = notebook.widgets.findIndex(
+          cell => cell.model.id === args['cell_id']
+        );
+        if (cellIndex !== -1) {
+          notebook.activeCellIndex = cellIndex;
+          notebook.mode = 'command';
+          notebook.scrollToItem(cellIndex, 'center');
+        }
       }
     }
   });

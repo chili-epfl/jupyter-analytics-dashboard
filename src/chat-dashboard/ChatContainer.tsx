@@ -44,9 +44,7 @@ const ChatContainer = (props: {
   return (
     <div style={{ width: '100%', padding: '15px' }}>
       <div style={{ display: 'flex', width: '100%', paddingBottom: '15px' }}>
-        <div style={{ color: 'white', fontSize: '20px', fontWeight: '500' }}>
-          Chat with Users
-        </div>
+        <div className="chat-title">Chat with Users</div>
         <div className="breadcrumb-buttons-container">
           <Button
             className="dashboard-button"
@@ -56,7 +54,7 @@ const ChatContainer = (props: {
           </Button>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: '1' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div style={{ width: '100%', maxHeight: '50%', overflowY: 'auto' }}>
           {connectedUsers.map((userId: string) => (
             <ConnectionComponent
@@ -67,55 +65,19 @@ const ChatContainer = (props: {
         </div>
         <div style={{ width: '100%', overflowY: 'auto' }}>
           {selectedUser && (
-            <div
-              style={{
-                height: '50%',
-                borderTop: 'solid 1px white',
-                paddingTop: '10px'
-              }}
-            >
-              <div
-                style={{
-                  color: 'white',
-                  padding: '5px 0 15px 0',
-                  fontWeight: '400'
-                }}
-                className="text-with-ellipsis"
-              >
-                Chat with {selectedUser}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  border: '1px solid white',
-                  borderRadius: '2px',
-                  padding: '2px 0 2px 3px'
-                }}
-              >
+            <div className="chat-container">
+              <div className="chat-with-label">Chat with {selectedUser}</div>
+              <div className="chat-input-container">
                 <input
                   type="text"
                   placeholder="Send a chat..."
                   value={message}
                   onChange={e => setMessage(e.target.value)}
-                  style={{
-                    flex: 1,
-                    color: 'white',
-                    fontSize: '14px',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRight: '1px solid white',
-                    outline: 'none'
-                  }}
+                  className="chat-input"
                 />
                 <button
                   onClick={() => sendMessage(selectedUser)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
+                  className="chat-send-button"
                 >
                   <runIcon.react elementSize="large" className="send-icon" />
                 </button>

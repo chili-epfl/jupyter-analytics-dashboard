@@ -73,13 +73,14 @@ function createNotebookGenerator(
     let headings: INotebookHeading[] = [];
     let collapseLevel = -1;
     const dict = {};
+    const notebook = panel.content;
 
     // initialize a variable for keeping track of the previous heading:
     let prev: INotebookHeading | null = null;
 
     // generate headings by iterating through all notebook cells
-    for (let i = 0; i < panel.content.widgets.length; i++) {
-      const cell: Cell = panel.content.widgets[i];
+    for (let i = 0; i < notebook.widgets.length; i++) {
+      const cell: Cell = notebook.widgets[i];
       const model = cell.model;
       const cellCollapseMetadata = options.syncCollapseState
         ? MARKDOWN_HEADING_COLLAPSED
@@ -95,8 +96,9 @@ function createNotebookGenerator(
         if (!widget || (widget && options.showCode)) {
           const onClick = (line: number) => {
             return () => {
-              panel.content.activeCellIndex = i;
-              cell.node.scrollIntoView();
+              notebook.activeCellIndex = i;
+              notebook.mode = 'command';
+              notebook.scrollToItem(i, 'center');
             };
           };
           const count = (cell as CodeCell).model.executionCount as
@@ -128,16 +130,14 @@ function createNotebookGenerator(
 
         // if the cell is rendered, generate the ToC items from the HTML...
         if (mcell.rendered && !mcell.inputHidden) {
-          const onClick = (el: Element) => {
+          const onClick = () => {
             return () => {
-              if (!mcell.rendered) {
-                panel.content.activeCellIndex = i;
-                el.scrollIntoView();
-              } else {
-                panel.content.mode = 'command';
-                cell.node.scrollIntoView();
-                panel.content.activeCellIndex = i;
+              if (mcell.rendered) {
+                notebook.mode = 'command';
               }
+              notebook.activeCellIndex = i;
+              notebook.mode = 'command';
+              notebook.scrollToItem(i, 'center');
             };
           };
           const htmlHeadings = getRenderedHTMLHeadings(
@@ -163,10 +163,11 @@ function createNotebookGenerator(
           }
           // if not rendered, generate ToC items from the cell text...
         } else {
-          const onClick = (line: number) => {
+          const onClick = () => {
             return () => {
-              panel.content.activeCellIndex = i;
-              cell.node.scrollIntoView();
+              notebook.activeCellIndex = i;
+              notebook.mode = 'command';
+              notebook.scrollToItem(i, 'center');
             };
           };
           const markdownHeadings = getMarkdownHeadings(

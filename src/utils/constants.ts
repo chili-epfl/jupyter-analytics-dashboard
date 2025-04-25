@@ -14,6 +14,8 @@ export const TOC_DASHBOARD_RENDER_TIMEOUT = 1000;
 export namespace CommandIDs {
   export const dashboardOpenDashboardPlayback = `${APP_ID}:dashboard-open-playback`;
 
+  export const dashboardScrollToCell = `${APP_ID}:dashboard-scroll-to-cell`;
+
   export const uploadNotebook = `${APP_ID}:dashboard-upload-notebook`;
 
   export const uploadNotebookPopup = `${APP_ID}:dashboard-upload-notebook-popup`
@@ -21,6 +23,10 @@ export namespace CommandIDs {
   export const copyDownloadLink = `${APP_ID}:dashboard-copy-download-link`;
 
   export const openLogin = `${APP_ID}:dashboard-open-login`;
+
+  export const pushCellUpdate = `${APP_ID}:dashboard-push-cell-update`;
+
+  export const pushNotebookUpdate = `${APP_ID}:dashboard-push-notebook-update`;
 }
 
 export const visuIconClass = 'jp-icon3';
