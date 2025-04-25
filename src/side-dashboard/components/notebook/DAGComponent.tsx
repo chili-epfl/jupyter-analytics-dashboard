@@ -6,8 +6,12 @@ import { CodeExecution, JSONGraph } from "../../../utils/interfaces";
 import { fetchWithCredentials, generateQueryArgsString } from "../../../utils/utils";
 import ChartContainer from "./ChartContainer";
 import GraphComponent from "./GraphComponent";
+import { CommandRegistry } from '@lumino/commands';
 
-const DAGComponent = (props: { notebookId: string }) => {
+const DAGComponent = (props: {
+    notebookId: string;
+    commands: CommandRegistry
+}) => {
     const [nxJsonData, setnxJsonData] = useState<JSONGraph>({
         multigraph: false,
         directed: false,
@@ -40,7 +44,7 @@ const DAGComponent = (props: { notebookId: string }) => {
 
     return (
         <ChartContainer
-            PassedComponent={<GraphComponent nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
+            PassedComponent={<GraphComponent commands={props.commands} nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
             title="Notebook DAG"
         />
     );

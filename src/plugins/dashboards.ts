@@ -149,6 +149,9 @@ export async function activateDashboardPlugins(
               signal_origin: 'TIME_VISU_CLICK'
             });
             break;
+          case 'DAGComponent':
+            // TODO record interaction ?
+            break;
           default:
             console.log(
               `${APP_ID}: dashboardScrollToCell command called from an unknown source.`

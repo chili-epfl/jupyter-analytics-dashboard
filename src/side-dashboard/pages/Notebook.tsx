@@ -34,7 +34,10 @@ const Notebook = (props: INotebookPageProps): JSX.Element => {
             notebookId={props.notebookId}
             commands={props.commands}
           />
-          <DAGComponent notebookId={props.notebookId} />
+          <DAGComponent
+            notebookId={props.notebookId}
+            commands={props.commands}
+          />
           </Col>
       </Row>
     </>

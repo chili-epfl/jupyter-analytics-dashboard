@@ -2,15 +2,19 @@ import React, { useEffect, useRef, useState } from "react";
 import { CodeExecution, JSONGraph } from "../../../utils/interfaces";
 import Loader from "../placeholder/Loader";
 import { NotebookD3Graph } from "./GraphD3";
+import { CommandRegistry } from '@lumino/commands';
 
 
-const GraphComponent = (props: ({ nxJsonData: JSONGraph, codeExecution: CodeExecution[] })) => {
+const GraphComponent = (props: {
+    nxJsonData: JSONGraph;
+    codeExecution: CodeExecution[];
+    commands: CommandRegistry
+}) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [nbd3Graph, setNbD3Graph] = useState<NotebookD3Graph | null>(null);
     useEffect(() => {
-        console.log(props.nxJsonData);
         if (containerRef.current) {
-            setNbD3Graph(new NotebookD3Graph(props.nxJsonData, containerRef.current));
+            setNbD3Graph(new NotebookD3Graph(props.commands, props.nxJsonData, containerRef.current));
         }
     }, [props.nxJsonData]);  // only watch code execution updates since nxJsonGraph is static
 

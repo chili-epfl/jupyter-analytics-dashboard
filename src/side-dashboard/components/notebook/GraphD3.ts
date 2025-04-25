@@ -1,4 +1,6 @@
+import { CommandRegistry } from '@lumino/commands';
 import * as d3 from "d3";
+import { CommandIDs } from "../../../utils/constants";
 import { CodeExecution, JSONGraph, JSONGraphEdge, JSONGraphNode, ShowLevel } from "../../../utils/interfaces";
 
 export class NotebookD3Graph {
@@ -40,6 +42,7 @@ export class NotebookD3Graph {
     private zoom: d3.ZoomBehavior<Element, unknown>;
 
     constructor(
+        private commands: CommandRegistry, // notebook commands
         private nxJsonData: JSONGraph,  // serialized networkX graph
         private container: HTMLElement,  // div to bind the graph to
     ) {
@@ -66,6 +69,7 @@ export class NotebookD3Graph {
         this.mainG.selectAll("*").remove();
 
         // bind callbacks to this to make sure the this keyword is properly initialized
+        this.onCellClick = this.onCellClick.bind(this);
         this.onPartClick = this.onPartClick.bind(this);
         this.onPartHover = this.onPartHover.bind(this);
         this.onPartLeave = this.onPartLeave.bind(this);
@@ -114,6 +118,7 @@ export class NotebookD3Graph {
             });
 
         // cell nodes : each node is a notebook code cell
+        const onCellClick = this.onCellClick;
         this.cellNodes = this.mainG.append("g")
             .attr("name", "nodes")
             .selectAll("circle")
@@ -124,12 +129,10 @@ export class NotebookD3Graph {
             .attr("fill", (n) => this.nodeColorScale(n.part))
             .attr("class", "cursor-pointer")
             .style("visibility", "hidden") // hidden since we initialize the viz in Part level mode
-            .on('mousedown', function (event, d) {
-                console.log(`Node ${d.id}, ${d?.cell_id} clicked !`);
-            })
+            .on('mousedown', function (event, d) { onCellClick(d) })
 
         // display the number of the cell on hover
-        this.cellNodes.append("title").text(d => `Cell ${d.id} of part ${d.part}`);
+        this.cellNodes.append("title").text(d => `[Click to navigate]&#013;Cell ${d.id} of part ${d.part}`);
 
         // parts edges : directed, each edge is a dependency between a part
         // and another part
@@ -339,8 +342,6 @@ export class NotebookD3Graph {
     }
 
     updateGraph(newCodeExecution: CodeExecution[]) {
-        console.log("newCodeExecution");
-        console.log(newCodeExecution);
 
         if (newCodeExecution.length === 0) {
             return;
@@ -399,6 +400,16 @@ export class NotebookD3Graph {
     private getPartOfNodeId(id: number): string {
         /* return the part of the node from a node id */
         return this.nxJsonData.nodes.find(n => n.id == id)?.part || "undefined"
+    }
+
+    private onCellClick(d: JSONGraphNode) {
+        if (!!d.cell_id) {
+            this.commands.execute(CommandIDs.dashboardScrollToCell, {
+                from: 'Visu',
+                source: 'DAGComponent',
+                cell_id: d.cell_id[0]
+            });
+        }
     }
 
     private onPartHover(d: string, ellipse: SVGEllipseElement) {
