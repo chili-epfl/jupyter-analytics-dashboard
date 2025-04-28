@@ -81,6 +81,7 @@ const UploadNotebookPopup = (props: {
     if (!notebookFile) {
       return;
     }
+    let errored = false;
     setErrorMessage("");  // hide any previous error
     const notebookName = notebookFile.name;
     const notebookContent = JSON.parse(await notebookFile.text());
@@ -92,10 +93,11 @@ const UploadNotebookPopup = (props: {
       })
       .catch(error => {
         // handle error while uploading
+        errored = true;
         setErrorMessage(error);
       });
 
-    if (!solutionNotebookFile) {
+    if (!solutionNotebookFile || errored) {
       return;
     }
     const solutionNotebookName = solutionNotebookFile.name;
@@ -103,6 +105,10 @@ const UploadNotebookPopup = (props: {
     uploadNotebook(solutionNotebookContent, solutionNotebookName, true, unianalyticsId)
       .then((uploadResponse: JSONGraph) => {
         setResultingDag(uploadResponse)
+      })
+      .catch(error => {
+        // handle error while uploading the solution
+        setErrorMessage(error);
       });
   }
   useEffect(() => {
@@ -160,8 +166,8 @@ const UploadNotebookPopup = (props: {
               </Col>
             </Row>
           </div>}
-        {errorMessage !== "" && <Row className="mt-3 mb-3">
-          <Col md={12} className="text-wrap">{errorMessage}</Col>
+        {errorMessage !== "" && <Row className="mt-3 mb-3 text-danger">
+          <Col md={12} className="text-wrap">Error: {errorMessage}</Col>
         </Row>}
         <Row className="mt-3">
           <Button
