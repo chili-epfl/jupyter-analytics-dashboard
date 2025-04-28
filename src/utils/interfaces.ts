@@ -109,9 +109,9 @@ export enum ShowLevel {
   CELL = "cell"
 }
 
-export interface CodeExecution {
-  cell: string,
-  code_exec_ok_pct: number,
-  code_exec_pct: number,
-  cell_click_pct: number
+export interface TocData {
+  status: string,
+  data: {
+    location_count: Map<string, number>
+  }
 }

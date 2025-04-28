@@ -61,9 +61,21 @@ const UploadNotebookPopup = (props: {
 
   const [dagEnabled, setDagEnabled] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successfulUpload, setSuccessfulUpload] = useState<boolean>(false);
+  const [uploadedNotebookId, setUploadedNotebookId] = useState<string>("");
   const [resultingDag, setResultingDag] = useState<JSONGraph>();
   const [notebookFile, setNotebookFile] = useState<File | null>(null);
   const [solutionNotebookFile, setSolutionNotebookFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (formRef.current) {
+      setTimeout(() => {
+        // @ts-ignore
+        formRef.current.querySelector("#notebook-form")?.classList.remove('jp-mod-styled')
+      }, 100);
+      // jupyter auto applies some class that messes up with bootstrap.
+    }
+  }, []);
 
   function onFileSelected(e: React.ChangeEvent<HTMLInputElement>, isSolution: boolean) {
     if (!e.target.files || e.target.files.length == 0) {
@@ -88,7 +100,9 @@ const UploadNotebookPopup = (props: {
 
     const unianalyticsId = await uploadNotebook(notebookContent, notebookName)
       .then(uploadResponse => {
-        downloadFile(new Blob([JSON.stringify(uploadResponse)], { type: "application/json" }), notebookName)
+        downloadFile(new Blob([JSON.stringify(uploadResponse)], { type: "application/json" }), notebookName);
+        setSuccessfulUpload(true);
+        setUploadedNotebookId(uploadResponse.metadata.unianalytics_notebook_id);
         return uploadResponse.metadata.unianalytics_notebook_id;
       })
       .catch(error => {
@@ -97,29 +111,21 @@ const UploadNotebookPopup = (props: {
         setErrorMessage(error);
       });
 
-    if (!solutionNotebookFile || errored) {
+    if (errored || !solutionNotebookFile) {
       return;
     }
     const solutionNotebookName = solutionNotebookFile.name;
     const solutionNotebookContent = JSON.parse(await solutionNotebookFile.text());
     uploadNotebook(solutionNotebookContent, solutionNotebookName, true, unianalyticsId)
       .then((uploadResponse: JSONGraph) => {
-        setResultingDag(uploadResponse)
+        setResultingDag(uploadResponse);
+        setSuccessfulUpload(true);
       })
       .catch(error => {
         // handle error while uploading the solution
         setErrorMessage(error);
       });
   }
-  useEffect(() => {
-    if (formRef.current) {
-      setTimeout(() => {
-        // @ts-ignore
-        formRef.current.querySelector("#notebook-form")?.classList.remove('jp-mod-styled')
-      }, 100);
-      // jupyter auto applies some class that messes up with bootstrap.
-    }
-  }, []);
 
   return (
     <div className="dashboard-unbpopup-content-container">
@@ -168,6 +174,10 @@ const UploadNotebookPopup = (props: {
           </div>}
         {errorMessage !== "" && <Row className="mt-3 mb-3 text-danger">
           <Col md={12} className="text-wrap">Error: {errorMessage}</Col>
+        </Row>}
+        {successfulUpload && <Row className="mt-3 mb-3 text-success">
+          <Col md={12} className="text-wrap">Successfully uploaded notebook '{notebookFile?.name}'. Download link :<br></br> 
+          <span className="font-monospace">{`${BACKEND_API_URL}/notebook/download/${uploadedNotebookId}`}</span></Col>
         </Row>}
         <Row className="mt-3">
           <Button

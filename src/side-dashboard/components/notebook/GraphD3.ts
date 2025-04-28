@@ -1,7 +1,7 @@
 import { CommandRegistry } from '@lumino/commands';
 import * as d3 from "d3";
 import { CommandIDs } from "../../../utils/constants";
-import { CodeExecution, JSONGraph, JSONGraphEdge, JSONGraphNode, ShowLevel } from "../../../utils/interfaces";
+import { JSONGraph, JSONGraphEdge, JSONGraphNode, ShowLevel } from "../../../utils/interfaces";
 
 export class NotebookD3Graph {
 
@@ -15,8 +15,8 @@ export class NotebookD3Graph {
     private centroids: any = {};  // centroids of each part ex: {"part1": {"x": x, "y": y}, "part2": {...}, ...}
 
     // activity config
-    private codeExecution: CodeExecution[] = [];
-    private totalActivity = 0;
+    private cellUsers: Map<string, number> = new Map<string, number>();
+    private totalUsers = 0;
 
     // nxJsonGraph config
     private parts: string[] = [];
@@ -132,7 +132,7 @@ export class NotebookD3Graph {
             .on('mousedown', function (event, d) { onCellClick(d) })
 
         // display the number of the cell on hover
-        this.cellNodes.append("title").text(d => `[Click to navigate]&#013;Cell ${d.id} of part ${d.part}`);
+        this.cellNodes.append("title").text(d => `[Click to navigate]\nCell ${d.id} of part ${d.part}`);
 
         // parts edges : directed, each edge is a dependency between a part
         // and another part
@@ -341,15 +341,14 @@ export class NotebookD3Graph {
         }
     }
 
-    updateGraph(newCodeExecution: CodeExecution[]) {
-
-        if (newCodeExecution.length === 0) {
+    updateGraph(newCellUsers: Map<string, number>) {
+        if (!newCellUsers || newCellUsers.size === 0) {
             return;
         }
-
-        this.totalActivity = newCodeExecution.reduce((c, a) =>
-            c + a.code_exec_ok_pct + a.code_exec_pct, 0);
-        this.codeExecution = newCodeExecution;
+        let totalUsers = 0;
+        newCellUsers.forEach((value) => totalUsers += value);
+        this.totalUsers = totalUsers;
+        this.cellUsers = newCellUsers;
         if (this.levelShown === ShowLevel.PART) {
             this.partNodes.attr("fill", (p) => this.blueScale(this.getActivityOfPart(p)));
         } else {
@@ -367,21 +366,20 @@ export class NotebookD3Graph {
                 cellIdsOfPart.push(n.cell_id[0]);
             }
         });
-        const cellsOfPart = this.codeExecution.filter((activity) =>
-            cellIdsOfPart.includes(activity.cell))
-        if (cellsOfPart) {
-            return cellsOfPart.reduce((c, a) => c + a.code_exec_ok_pct + a.code_exec_pct, 0)
-                / this.totalActivity;
+        if (!cellIdsOfPart) {
+            return 0;
         }
-        return 0;
+        let activityOfPart = 0;
+        this.cellUsers.forEach((value, cellId) => {
+            if (cellIdsOfPart.includes(cellId)) {
+                activityOfPart += value;
+            }
+        })
+        return activityOfPart / this.totalUsers;
     }
 
     private getActivityOfNode(n: JSONGraphNode) {
-        const cellNode = this.codeExecution.find((cell) => cell.cell === (n.cell_id || [""])[0]);
-        if (cellNode) {
-            return (cellNode.code_exec_ok_pct + cellNode.code_exec_pct) / this.totalActivity;
-        }
-        return 0;
+        return (this.cellUsers.get((n.cell_id || [""])[0]) || 0) / this.totalUsers;
     }
 
     private filterNodesOfPart(node: JSONGraphNode, part: string) {

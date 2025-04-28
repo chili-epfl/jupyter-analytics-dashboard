@@ -1,12 +1,13 @@
+import { CommandRegistry } from '@lumino/commands';
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { BACKEND_API_URL } from "../../..";
 import { RootState } from "../../../redux/store";
-import { CodeExecution, JSONGraph } from "../../../utils/interfaces";
+import { APP_ID } from "../../../utils/constants";
+import { JSONGraph, TocData } from "../../../utils/interfaces";
 import { fetchWithCredentials, generateQueryArgsString } from "../../../utils/utils";
 import ChartContainer from "./ChartContainer";
 import GraphComponent from "./GraphComponent";
-import { CommandRegistry } from '@lumino/commands';
 
 const DAGComponent = (props: {
     notebookId: string;
@@ -24,7 +25,7 @@ const DAGComponent = (props: {
     const dashboardQueryArgsRedux = useSelector(
         (state: RootState) => state.commondashboard.dashboardQueryArgs
     );
-    const [codeExecution, setCodeExecution] = useState<CodeExecution[]>([]);
+    const [cellUsers, setCellUsers] = useState<Map<string, number>>(new Map<string, number>());
     const refreshRequired = useSelector(
         (state: RootState) => state.commondashboard.refreshBoolean
     );
@@ -49,16 +50,17 @@ const DAGComponent = (props: {
             return;
         }
         fetchWithCredentials(
-            `${BACKEND_API_URL}/dashboard/${props.notebookId}/user_code_execution?${generateQueryArgsString(dashboardQueryArgsRedux, props.notebookId)}`
+            `${BACKEND_API_URL}/dashboard/${props.notebookId}/toc?${generateQueryArgsString(dashboardQueryArgsRedux, props.notebookId)}`
         )
             .then(response => response.json())
-            .then(newCodeExecution => setCodeExecution(newCodeExecution));
+            .then((newCodeExecution: TocData) => setCellUsers(new Map(Object.entries(newCodeExecution.data.location_count))))
+            .catch(error => console.log(`${APP_ID}: Failed to retrieve ToC data`, error));
     }, [refreshRequired]);
 
     return (<>
         {isDagEnabled &&
             <ChartContainer
-                PassedComponent={<GraphComponent commands={props.commands} nxJsonData={nxJsonData} codeExecution={codeExecution}></GraphComponent>}
+                PassedComponent={<GraphComponent commands={props.commands} nxJsonData={nxJsonData} cellUsers={cellUsers}></GraphComponent>}
                 title="Notebook DAG"
             />
         }
