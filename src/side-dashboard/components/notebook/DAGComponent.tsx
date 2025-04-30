@@ -8,6 +8,8 @@ import { JSONGraph, TocData } from "../../../utils/interfaces";
 import { fetchWithCredentials, generateQueryArgsString } from "../../../utils/utils";
 import ChartContainer from "./ChartContainer";
 import GraphComponent from "./GraphComponent";
+import { Card, Col, Container, Form, Row } from 'react-bootstrap';
+
 
 const DAGComponent = (props: {
     notebookId: string;
@@ -20,7 +22,7 @@ const DAGComponent = (props: {
         nodes: [],
         graph: null
     });
-
+    const [uploadMessage, setUploadMessage] = useState<string>("");
     const [isDagEnabled, setIsDagEnabled] = useState<boolean>(true);
     const dashboardQueryArgsRedux = useSelector(
         (state: RootState) => state.commondashboard.dashboardQueryArgs
@@ -29,7 +31,7 @@ const DAGComponent = (props: {
     const refreshRequired = useSelector(
         (state: RootState) => state.commondashboard.refreshBoolean
     );
-    useEffect(() => {
+    const retrieveDag = () => {
         fetchWithCredentials(
             `${BACKEND_API_URL}/dashboard/${props.notebookId}/dag`
         )
@@ -41,10 +43,11 @@ const DAGComponent = (props: {
             })
             .then(newNxJsonData => {
                 if (isDagEnabled) {
-                    setnxJsonData(newNxJsonData)
+                    setnxJsonData(newNxJsonData);
                 }
             });
-    }, []);
+    };
+    useEffect(retrieveDag, []);
     useEffect(() => {
         if (!isDagEnabled) {
             return;
@@ -57,13 +60,56 @@ const DAGComponent = (props: {
             .catch(error => console.log(`${APP_ID}: Failed to retrieve ToC data`, error));
     }, [refreshRequired]);
 
-    return (<>
-        {isDagEnabled &&
-            <ChartContainer
-                PassedComponent={<GraphComponent commands={props.commands} nxJsonData={nxJsonData} cellUsers={cellUsers}></GraphComponent>}
-                title="Notebook DAG"
-            />
+    async function onSolutionSelected(e: React.ChangeEvent<HTMLInputElement>) {
+        if (!e.target.files || e.target.files.length == 0) {
+            return;
         }
+        const file = e.target.files[0];
+        const formData = new FormData();
+        formData.append('notebook_content', JSON.stringify(JSON.parse(await file.text())));
+        formData.append('name', file.name);
+
+        fetchWithCredentials(`${BACKEND_API_URL}/notebook/dag/${props.notebookId}`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (response.ok) {
+                    setUploadMessage("Successfully generated the DAG ! Refresh or re-open the notebook to see it.")
+                } else {
+                    response.text().then(t => setUploadMessage("Failed to upload the solution: " + t + ". Try again."));
+                }
+            })
+            .catch(error => {
+                setUploadMessage("Failed to upload the solution: " + error + "\nPlease try again.");
+                return false
+            });
+    }
+
+    return (<>
+        <ChartContainer
+            PassedComponent={isDagEnabled ?
+                <GraphComponent commands={props.commands} nxJsonData={nxJsonData} cellUsers={cellUsers}></GraphComponent> :
+                <Container>
+                    <Row className="justify-content-center">
+                        <Col md="auto">No DAG associated with this notebook.</Col>
+                    </Row>
+                    <Row className="justify-content-center">
+                        <Col md="auto">
+                            <Form.Group controlId="notebook-solution" className="text-decoration-underline" onChange={onSolutionSelected}>
+                                <Form.Control type="file" />
+                            </Form.Group>
+                        </Col>
+                    </Row>
+                    {uploadMessage != "" &&
+                        <Row className="justify-content-center">
+                            <Col md="auto" className="text-info-emphasis">
+                                {uploadMessage}
+                            </Col>
+                        </Row>}
+                </Container>}
+            title="Notebook DAG"
+        />
     </>
     );
 }
