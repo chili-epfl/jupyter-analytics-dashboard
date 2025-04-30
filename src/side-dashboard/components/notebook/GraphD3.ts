@@ -37,7 +37,7 @@ export class NotebookD3Graph {
     private cellNodes: d3.Selection<SVGCircleElement, JSONGraphNode, SVGGElement, unknown>;
     private cellsEdges: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private partsEdges: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
-    private partTexts: d3.Selection<SVGTextElement, string, SVGGElement, unknown>;
+    private partTextsG: d3.Selection<SVGGElement, string, SVGGElement, unknown>;
     private cellsEdgesInterParts: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private zoom: d3.ZoomBehavior<Element, unknown>;
 
@@ -74,6 +74,7 @@ export class NotebookD3Graph {
         this.onPartHover = this.onPartHover.bind(this);
         this.onPartLeave = this.onPartLeave.bind(this);
         this.onTick = this.onTick.bind(this);
+        this.computeEdgeBetween = this.computeEdgeBetween.bind(this);
 
         // configure the simulation
         this.simulation = d3.forceSimulation(this.nxJsonData.nodes)
@@ -196,16 +197,38 @@ export class NotebookD3Graph {
             .attr("stroke", "context-stroke");
 
         // display the part name above the nodes
-        this.partTexts = this.mainG.append("g")
+        this.partTextsG = this.mainG.append("g")
             .attr("name", "partTexts")
             .selectAll("text")
             .data(this.parts)
-            .enter().append("text")
+            .enter().append("g");
+
+        const partRects = this.partTextsG.append("rect")
+            .attr("fill", "#ffffff")
+            .attr("stroke-width", 1)
+            .attr("stroke", p => this.nodeColorScale(p))
+            .attr("rx", 5)
+            .attr("ry", 5);
+
+        this.partTextsG.append("text")
             .attr("fill", "#636363")
             .attr("class", "part-text")
             .text(p => (p.length > this.maxTextLength) ? p.slice(0, this.maxTextLength) + '...' : p)
             .attr("text-anchor", "middle")
             .attr("font-size", 10);
+
+        partRects.each(function (p) {
+            const bbox = (d3.select(this.parentNode as SVGGElement)
+                .select("text")
+                .node() as SVGGraphicsElement)
+                .getBBox();
+            const margin = 5;
+            d3.select(this)
+                .attr("x", bbox.x - margin)
+                .attr("y", bbox.y - margin)
+                .attr("width", bbox.width + margin * 2)
+                .attr("height", bbox.height + margin * 2)
+        })
 
         // switch to toggle between cell and part levels
         const levelSwitch = d3.select("#levelSwitch")
@@ -231,6 +254,22 @@ export class NotebookD3Graph {
             });
 
         (levelSwitch.node() as HTMLInputElement).checked = true;
+    }
+
+    private computeEdgeBetween(source: { x: number, y: number }, target: { x: number, y: number }): { x1: number, x2: number, y1: number, y2: number } {
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        const offsetX = (dx / dist) * this.nodeRadius;
+        const offsetY = (dy / dist) * this.nodeRadius;
+
+        const x1 = source.x + offsetX;
+        const y1 = source.y + offsetY;
+        const x2 = target.x - offsetX;
+        const y2 = target.y - offsetY;
+
+        return { x1, x2, y1, y2 }
     }
 
     private onTick() {
@@ -265,7 +304,7 @@ export class NotebookD3Graph {
         // update part nodes position, activity color, text positions
         const cellNodes = this.cellNodes;
         const nodeRadius = this.nodeRadius;
-        const partTexts = this.partTexts;
+        const partTextsG = this.partTextsG;
         const centroids = this.centroids;
         const filterNodesOfPart = this.filterNodesOfPart;
         this.partNodes
@@ -280,12 +319,9 @@ export class NotebookD3Graph {
                 d3.select(this)
                     .attr("rx", rx)
                     .attr("ry", ry)
-
-                partTexts.filter(text => text === part)
-                    .attr("x", centroids[part].cx)
-                    .attr("y", centroids[part].cy)
-                    .attr("dx", 0)
-                    .attr("dy", -(ry / 2 + 20))
+                const currentBBox = (d3.select(this as SVGEllipseElement).node() as SVGGraphicsElement).getBBox();
+                partTextsG.filter(text => text === part)
+                    .attr("transform", `translate(${currentBBox.x + currentBBox.width / 2}, ${currentBBox.y - 12})`);
             })
 
         // update cell nodes position according to their centroids
@@ -313,16 +349,26 @@ export class NotebookD3Graph {
             .attr("y1", (d: any) => d.source.y)
             .attr("x2", (d: any) => d.target.x)
             .attr("y2", (d: any) => d.target.y);
+
+        const computeEdgeBetween = this.computeEdgeBetween;
         this.cellsEdges
-            .attr("x1", (d: any) => d.source.x)
-            .attr("y1", (d: any) => d.source.y)
-            .attr("x2", (d: any) => d.target.x)
-            .attr("y2", (d: any) => d.target.y);
+            .each(function (d: any) {
+                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target);
+                d3.select(this)
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", x2)
+                    .attr("y2", y2);
+            });
         this.cellsEdgesInterParts
-            .attr("x1", (d: any) => d.source.x)
-            .attr("y1", (d: any) => d.source.y)
-            .attr("x2", (d: any) => d.target.x)
-            .attr("y2", (d: any) => d.target.y);
+            .each(function (d: any) {
+                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target);
+                d3.select(this)
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", x2)
+                    .attr("y2", y2);
+            });
 
         // update svg viewBox to avoid drawing nodes outside of the initial svg
         const xExtent = d3.extent(this.cellNodes.data(), d => d.x) as [number, number];
