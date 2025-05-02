@@ -179,7 +179,7 @@ const UploadNotebookPopup = (props: {
           <Col md={12} className="text-wrap">Successfully uploaded notebook '{notebookFile?.name}'. Download link :<br></br> 
           <span className="font-monospace">{`${BACKEND_API_URL}/notebook/download/${uploadedNotebookId}`}</span></Col>
         </Row>}
-        <Row className="mt-3">
+        <Row className="mt-3 justify-content-center">
           <Button
             variant="primary"
             type="submit"
