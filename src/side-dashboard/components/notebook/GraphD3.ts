@@ -10,6 +10,7 @@ export class NotebookD3Graph {
 
     private strength = -20; // nodes base repulsive force
     private nodeRadius = 10;  // cell nodes radius
+    private partRadius = 40;  // part nodes radius
     private maxTextLength = 30;  // truncate part texts with size > maxTextLength
 
     private centroids: any = {};  // centroids of each part ex: {"part1": {"x": x, "y": y}, "part2": {...}, ...}
@@ -23,7 +24,7 @@ export class NotebookD3Graph {
 
     // color scales
     private nodeColorScale: d3.ScaleOrdinal<string, string, never>; // for part singular color
-    private blueScale = d3.scaleSequential(d3.interpolateBlues); // for activity
+    private blueScale = d3.scaleSequential(d3.interpolateTurbo); // for activity
 
     // svg config
     private width = 250;
@@ -33,16 +34,19 @@ export class NotebookD3Graph {
 
     // d3 elements
     private simulation: d3.Simulation<JSONGraphNode, undefined>;
-    private partNodes: d3.Selection<SVGEllipseElement, string, SVGGElement, unknown>;
+    // nodes with id < 4000 are the "cell nodes", nodes with id in [4000; 4096] are the special "part nodes"
+    private partNodes: d3.Selection<SVGCircleElement, JSONGraphNode, SVGGElement, unknown>;
     private cellNodes: d3.Selection<SVGCircleElement, JSONGraphNode, SVGGElement, unknown>;
+
     private cellsEdges: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private partsEdges: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private partTextsG: d3.Selection<SVGGElement, string, SVGGElement, unknown>;
+    private partRects: d3.Selection<SVGRectElement, string, SVGGElement, unknown>;
     private cellsEdgesInterParts: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private zoom: d3.ZoomBehavior<Element, unknown>;
 
     constructor(
-        private commands: CommandRegistry, // notebook commands
+        private commands: any = { execute: (a: string, b: any) => { } }, // notebook commands
         private nxJsonData: JSONGraph,  // serialized networkX graph
         private container: HTMLElement,  // div to bind the graph to
     ) {
@@ -93,44 +97,43 @@ export class NotebookD3Graph {
         //@ts-ignore
         this.svg.call(this.zoom);
 
-        // part nodes : each node is a markdown part in the notebook
-        const onPartClick = this.onPartClick;
-        const onPartHover = this.onPartHover;
-        const onPartLeave = this.onPartLeave;
-        this.partNodes = this.mainG.append("g")
-            .attr("name", "ellipses")
-            .selectAll("ellipse")
-            .data(this.parts)
-            .enter().append("ellipse")
-            .attr("fill", "#FFFFFF")
-            .attr("stroke-width", 3)
-            .attr("stroke", (p) => this.nodeColorScale(p))
-            .attr("class", "cursor-pointer")
-            .attr("rx", 0)
-            .attr("ry", 0)
-            .attr("cx", 0)
-            .attr("cy", 0)
-            .on('mousedown', function (event, d) { onPartClick(d, this) })
-            .on('mouseover', function (event, d) { onPartHover(d, this) })
-            .on('mouseleave', function (event, d) {
-                if (event.relatedTarget.tagName != "circle") {
-                    onPartLeave(d, this);
-                }
-            });
-
-        // cell nodes : each node is a notebook code cell
+        // nodes definition
         const onCellClick = this.onCellClick;
-        this.cellNodes = this.mainG.append("g")
+        const allNodes = this.mainG.append("g")
             .attr("name", "nodes")
             .selectAll("circle")
             .data(nxJsonData.nodes)
             .enter().append("circle")
-            .attr("r", n => n.id > 4000 ? 0 : this.nodeRadius)
-            .attr("stroke", "#000000")
+            .attr("r", n => n.id > 4000 ? this.partRadius : this.nodeRadius)
+            .attr("stroke", "#000000");
+
+        this.cellNodes = allNodes.filter(n => n.id < 4000)
             .attr("fill", (n) => this.nodeColorScale(n.part))
             .attr("class", "cursor-pointer")
             .style("visibility", "hidden") // hidden since we initialize the viz in Part level mode
-            .on('mousedown', function (event, d) { onCellClick(d) })
+            .on('mousedown', function (event, d) { onCellClick(d) });;
+
+        const onPartClick = this.onPartClick;
+        const onPartHover = this.onPartHover;
+        const onPartLeave = this.onPartLeave;
+        // part nodes : "bigger" nodes that represent the parts
+        this.partNodes = allNodes.filter(n => n.id >= 4000)
+            .attr("visibility", "shown")
+            .attr("fill", "#FFFFFF")
+            .attr("stroke-width", 3)
+            .attr("stroke", (n) => this.nodeColorScale(n.part))
+            .attr("class", "cursor-pointer")
+            .attr("r", this.partRadius)
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .on('mousedown', function (event, d) { onPartClick(d.part, this) })
+            .on('mouseover', function (event, d) { onPartHover(d.part, this) })
+            .on('mouseleave', function (event, d) {
+                const elem = d3.select(event.relatedTarget);
+                if (elem.node() != this && event.relatedTarget.tagName != "circle") {
+                    onPartLeave(d.part, this);
+                }
+            });
 
         // display the number of the cell on hover
         this.cellNodes.append("title").text(d => `[Click to navigate]\nCell ${d.id} of part ${d.part}`);
@@ -147,7 +150,7 @@ export class NotebookD3Graph {
             .attr("stroke-width", 2)
             .attr("marker-end", "url(#arrow)");
 
-        // parts edges : directed, each edge is a dependency between a cell
+        // cells edges : directed, each edge is a dependency between a cell
         // and another cell
         this.cellsEdges = this.mainG.append("g")
             .attr("name", "cellsEdges")
@@ -203,7 +206,7 @@ export class NotebookD3Graph {
             .data(this.parts)
             .enter().append("g");
 
-        const partRects = this.partTextsG.append("rect")
+        this.partRects = this.partTextsG.append("rect")
             .attr("fill", "#ffffff")
             .attr("stroke-width", 1)
             .attr("stroke", p => this.nodeColorScale(p))
@@ -217,7 +220,7 @@ export class NotebookD3Graph {
             .attr("text-anchor", "middle")
             .attr("font-size", 10);
 
-        partRects.each(function (p) {
+        this.partRects.each(function (p) {
             const bbox = (d3.select(this.parentNode as SVGGElement)
                 .select("text")
                 .node() as SVGGraphicsElement)
@@ -228,7 +231,7 @@ export class NotebookD3Graph {
                 .attr("y", bbox.y - margin)
                 .attr("width", bbox.width + margin * 2)
                 .attr("height", bbox.height + margin * 2)
-        })
+        });
 
         // switch to toggle between cell and part levels
         const levelSwitch = d3.select("#levelSwitch")
@@ -256,13 +259,14 @@ export class NotebookD3Graph {
         (levelSwitch.node() as HTMLInputElement).checked = true;
     }
 
-    private computeEdgeBetween(source: { x: number, y: number }, target: { x: number, y: number }): { x1: number, x2: number, y1: number, y2: number } {
+    private computeEdgeBetween(source: { x: number, y: number }, target: { x: number, y: number }, radius: number): { x1: number, x2: number, y1: number, y2: number } {
+        // compute the edge start/stop coordinates by takins the node radius into account
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        const offsetX = (dx / dist) * this.nodeRadius;
-        const offsetY = (dy / dist) * this.nodeRadius;
+        const offsetX = (dx / dist) * radius;
+        const offsetY = (dy / dist) * radius;
 
         const x1 = source.x + offsetX;
         const y1 = source.y + offsetY;
@@ -287,7 +291,7 @@ export class NotebookD3Graph {
             let tx = 0;
             let ty = 0;
             let N = 0;
-            this.cellNodes.filter(n => n.part == p).each(n => {
+            this.cellNodes.filter(n => n.part == p && n.id < 4000).each(n => {
                 tx += n.x || 0;
                 ty += n.y || 0;
                 N += 1;
@@ -308,10 +312,10 @@ export class NotebookD3Graph {
         const centroids = this.centroids;
         const filterNodesOfPart = this.filterNodesOfPart;
         this.partNodes
-            .attr("cx", (p) => this.centroids[p].cx)
-            .attr("cy", (p) => this.centroids[p].cy)
-            .each(function (part) {
-                const nodesOfPart = cellNodes.filter(n => filterNodesOfPart(n, part))
+            .attr("cx", (n) => this.centroids[n.part].cx)
+            .attr("cy", (n) => this.centroids[n.part].cy)
+            .each(function (node) {
+                const nodesOfPart = cellNodes.filter(n => filterNodesOfPart(n, node.part))
                 const xExtent = d3.extent(nodesOfPart.data(), d => d.x) as [number, number];
                 const yExtent = d3.extent(nodesOfPart.data(), d => d.y) as [number, number];
                 const { rx, ry } = { rx: (xExtent[1] - xExtent[0]) + nodeRadius, ry: (yExtent[1] - yExtent[0]) + nodeRadius };
@@ -319,13 +323,14 @@ export class NotebookD3Graph {
                 d3.select(this)
                     .attr("rx", rx)
                     .attr("ry", ry)
-                const currentBBox = (d3.select(this as SVGEllipseElement).node() as SVGGraphicsElement).getBBox();
-                partTextsG.filter(text => text === part)
+                const currentBBox = (d3.select(this as SVGCircleElement).node() as SVGGraphicsElement).getBBox();
+                partTextsG.filter(text => text === node.part)
                     .attr("transform", `translate(${currentBBox.x + currentBBox.width / 2}, ${currentBBox.y - 12})`);
-            })
+            });
 
         // update cell nodes position according to their centroids
         this.cellNodes
+            .filter(d => d.id < 4000)
             .each(function (d) {
                 const cx = centroids[d.part].cx;
                 const cy = centroids[d.part].cy;
@@ -344,25 +349,37 @@ export class NotebookD3Graph {
             .attr("cy", (d: any) => d.y)
 
         // update edges positions according to nodes positions
-        this.partsEdges
-            .attr("x1", (d: any) => d.source.x)
-            .attr("y1", (d: any) => d.source.y)
-            .attr("x2", (d: any) => d.target.x)
-            .attr("y2", (d: any) => d.target.y);
-
+        // we read them from the DOM because we are manually updating cx/cy in the simulation
         const computeEdgeBetween = this.computeEdgeBetween;
-        this.cellsEdges
-            .each(function (d: any) {
-                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target);
+        const partNodes = this.partNodes;
+        const partRadius = this.partRadius;
+        this.partsEdges
+            .each(function (e: any) {
+                const source = partNodes.filter(n => n.id == e.source.id).node();
+                const target = partNodes.filter(n => n.id == e.target.id).node();
+                const { x1, x2, y1, y2 } = computeEdgeBetween(
+                    { x: +(source?.getAttribute("cx") || 0), y: +(source?.getAttribute("cy") || 0) },
+                    { x: +(target?.getAttribute("cx") || 0), y: +(target?.getAttribute("cy") || 0) },
+                    partRadius);
                 d3.select(this)
                     .attr("x1", x1)
                     .attr("y1", y1)
                     .attr("x2", x2)
                     .attr("y2", y2);
             });
+        this.cellsEdges
+            .each(function (d: any) {
+                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target, nodeRadius);
+                d3.select(this)
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", x2)
+                    .attr("y2", y2);
+            });
+
         this.cellsEdgesInterParts
             .each(function (d: any) {
-                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target);
+                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target, nodeRadius);
                 d3.select(this)
                     .attr("x1", x1)
                     .attr("y1", y1)
@@ -371,18 +388,17 @@ export class NotebookD3Graph {
             });
 
         // update svg viewBox to avoid drawing nodes outside of the initial svg
-        const xExtent = d3.extent(this.cellNodes.data(), d => d.x) as [number, number];
-        const yExtent = d3.extent(this.cellNodes.data(), d => d.y) as [number, number];
+        const xExtent = d3.extent(this.parts.flatMap(p => [this.centroids[p].cx + this.partRadius + 3, this.centroids[p].cx - this.partRadius - 3]));
+        const yExtent = d3.extent(this.parts.flatMap(p => [this.centroids[p].cy + this.partRadius + 3, this.centroids[p].cy - this.partRadius - 12 - 3]));
 
         if (!!xExtent[0] && !!xExtent[1] && !!yExtent[0] && !!yExtent[1]) {
             const newWidth = Math.abs(xExtent[0]) + xExtent[1];
             const newHeight = Math.abs(yExtent[0]) + yExtent[1];
-            const margin = this.nodeRadius * 2
             this.svg.attr("viewBox", [
-                Math.min(xExtent[0] - margin, 0),
-                Math.min(yExtent[0] - margin, 0),
-                Math.max(newWidth + margin, this.width),
-                Math.max(newHeight + margin, this.height)
+                xExtent[0],
+                yExtent[0],
+                newWidth,
+                newHeight
             ]);
         }
     }
@@ -396,7 +412,7 @@ export class NotebookD3Graph {
         this.totalUsers = totalUsers;
         this.cellUsers = newCellUsers;
         if (this.levelShown === ShowLevel.PART) {
-            this.partNodes.attr("fill", (p) => this.blueScale(this.getActivityOfPart(p)));
+            this.partNodes.attr("fill", (n) => this.blueScale(this.getActivityOfPart(n.part)));
         } else {
             this.cellNodes.attr("fill", (n) => this.blueScale(this.getActivityOfNode(n)));
         }
@@ -456,13 +472,13 @@ export class NotebookD3Graph {
         }
     }
 
-    private onPartHover(d: string, ellipse: SVGEllipseElement) {
+    private onPartHover(d: string, circle: SVGCircleElement) {
         /* Hide the activity of each parts when hovering them */
         if (this.aPartIsSelected) {
             return;
         }
-        const d3Ellipse = d3.select(ellipse);
-        d3Ellipse
+        const d3Circle = d3.select(circle);
+        d3Circle
             .attr("fill-opacity", "0")
         this.partsEdges.filter(e => this.filterEdgesOfPart(e, d, true))
             .attr("stroke-opacity", 1)
@@ -473,12 +489,12 @@ export class NotebookD3Graph {
             .style("visibility", "visible");
     }
 
-    private onPartLeave(d: string, ellipse: SVGEllipseElement) {
+    private onPartLeave(d: string, circle: SVGCircleElement) {
         /* Show the activity of each parts when leaving them */
         if (this.aPartIsSelected) {
             return;
         }
-        d3.select(ellipse)
+        d3.select(circle)
             .attr("fill-opacity", (e) => this.levelShown === ShowLevel.CELL ? "0" : "1")
         this.partsEdges.filter(e => this.filterEdgesOfPart(e, d, true))
             .attr("stroke-opacity", 1)
@@ -489,14 +505,14 @@ export class NotebookD3Graph {
             .style("visibility", (e) => this.levelShown === ShowLevel.CELL ? "visible" : "hidden");
     }
 
-    private onPartClick(d: string, ellipse: SVGEllipseElement) {
+    private onPartClick(d: string, circle: SVGCircleElement) {
         /* Zoom in to a part when clicking them */
         if (!this.aPartIsSelected) {
             this.aPartIsSelected = true;
             const viewBox = this.svg.attr("viewBox").split(",").map(Number);
             const viewWidth = viewBox[2];
             const viewHeight = viewBox[3];
-            const bounds = ellipse.getBBox();
+            const bounds = circle.getBBox();
             const cx = bounds.x + bounds.width / 2;
             const cy = bounds.y + bounds.height / 2;
             // Compute the scale so the ellipse fills the screen
@@ -514,7 +530,7 @@ export class NotebookD3Graph {
                         .translate(translate[0], translate[1])
                         .scale(scale)
                 );
-            d3.select(ellipse).attr("class", "");
+            d3.select(circle).attr("class", "");
         } else {
             this.aPartIsSelected = false;
             this.mainG.transition()
@@ -524,7 +540,7 @@ export class NotebookD3Graph {
                     this.zoom.transform,
                     d3.zoomIdentity
                 );
-            d3.select(ellipse).attr("class", "cursor-pointer");
+            d3.select(circle).attr("class", "cursor-pointer");
         }
     }
 }
