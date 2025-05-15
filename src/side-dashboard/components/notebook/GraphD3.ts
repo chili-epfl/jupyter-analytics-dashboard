@@ -24,10 +24,10 @@ export class NotebookD3Graph {
 
     // color scales
     private nodeColorScale: d3.ScaleOrdinal<string, string, never>; // for part singular color
-    private blueScale = d3.scaleSequential(d3.interpolateTurbo); // for activity
+    private blueScale = d3.scaleSequential(d3.interpolateBlues); // for activity
 
     // svg config
-    private width = 250;
+    private width = "100%";
     private height = 250;
     private svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
     private mainG: d3.Selection<SVGGElement, unknown, null, undefined>;
@@ -45,6 +45,9 @@ export class NotebookD3Graph {
     private cellsEdgesInterParts: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private zoom: d3.ZoomBehavior<Element, unknown>;
 
+    private idealPositions: number[][] = [];
+    private enableIdealPositions = false;
+
     constructor(
         private commands: any = { execute: (a: string, b: any) => { } }, // notebook commands
         private nxJsonData: JSONGraph,  // serialized networkX graph
@@ -55,6 +58,7 @@ export class NotebookD3Graph {
 
         this.parts = [...new Set(this.nxJsonData.nodes.map(n => n.part))];
 
+        this.idealPositions = this.parts.map((p, i) => [i % 2 ? 250 : 0, i * 100]);
         this.nodeColorScale = d3.scaleOrdinal(this.parts, d3.schemeTableau10);
 
         // ================================ Definitions ================================
@@ -88,7 +92,7 @@ export class NotebookD3Graph {
                     // inter-part links repulse more than intra part links
                     (link.source as JSONGraphNode).part == (link.target as JSONGraphNode).part ? 0.1 : 0.001))
             .force("charge", d3.forceManyBody().strength(this.strength))
-            .force("center", d3.forceCenter(this.width / 2, this.height / 2))
+            .force("center", d3.forceCenter(250 / 2, this.height / 2))
             // we binded this.ticked to this so we can use this syntax to assign callbacks
             .on("tick", this.onTick);
 
@@ -287,7 +291,7 @@ export class NotebookD3Graph {
             .style("visibility", alpha > 0.01 ? "visible" : "hidden");
 
         // update the centroids of each part
-        this.parts.forEach(p => {
+        this.parts.forEach((p, i) => {
             let tx = 0;
             let ty = 0;
             let N = 0;
@@ -296,7 +300,12 @@ export class NotebookD3Graph {
                 ty += n.y || 0;
                 N += 1;
             });
-            this.centroids[p] = { cx: tx / N, cy: ty / N };
+            const cIdealPosition = this.idealPositions[i];
+            if (this.enableIdealPositions) {
+                this.centroids[p] = { cx: cIdealPosition[0] * 0.1 + 0.9 * (tx / N), cy: cIdealPosition[1] * 0.1 + 0.9 * (ty / N) };
+            } else {
+                this.centroids[p] = { cx: (tx / N), cy: (ty / N) };
+            }
         });
 
         // don't modify points close the the group centroid:
@@ -389,7 +398,7 @@ export class NotebookD3Graph {
 
         // update svg viewBox to avoid drawing nodes outside of the initial svg
         const xExtent = d3.extent(this.parts.flatMap(p => [this.centroids[p].cx + this.partRadius + 3, this.centroids[p].cx - this.partRadius - 3]));
-        const yExtent = d3.extent(this.parts.flatMap(p => [this.centroids[p].cy + this.partRadius + 3, this.centroids[p].cy - this.partRadius - 12 - 3]));
+        const yExtent = d3.extent(this.parts.flatMap(p => [this.centroids[p].cy + this.partRadius + 3, this.centroids[p].cy - this.partRadius - 28 - 3]));
 
         if (!!xExtent[0] && !!xExtent[1] && !!yExtent[0] && !!yExtent[1]) {
             const newWidth = Math.abs(xExtent[0]) + xExtent[1];

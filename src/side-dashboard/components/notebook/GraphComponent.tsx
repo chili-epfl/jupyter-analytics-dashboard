@@ -29,9 +29,9 @@ const GraphComponent = (props: {
             <div className="row justify-content-center">
                 <svg height="30px" width="100%">
                     <defs>
-                        <linearGradient id="blue-gradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="rgb(247, 251, 255)"></stop><stop offset="10%" stop-color="rgb(227, 238, 249)"></stop><stop offset="20%" stop-color="rgb(207, 225, 242)"></stop><stop offset="30%" stop-color="rgb(181, 212, 233)"></stop><stop offset="40%" stop-color="rgb(147, 195, 223)"></stop><stop offset="50%" stop-color="rgb(109, 174, 213)"></stop><stop offset="60%" stop-color="rgb(75, 151, 201)"></stop><stop offset="70%" stop-color="rgb(47, 126, 188)"></stop><stop offset="80%" stop-color="rgb(24, 100, 170)"></stop><stop offset="90%" stop-color="rgb(10, 74, 144)"></stop><stop offset="100%" stop-color="rgb(8, 48, 107)"></stop></linearGradient>
+                        <linearGradient id="scale-gradient" x1="0%" x2="100%" y1="0%" y2="0%"><stop offset="0%" stop-color="rgb(247, 251, 255)"></stop><stop offset="10%" stop-color="rgb(227, 238, 249)"></stop><stop offset="20%" stop-color="rgb(207, 225, 242)"></stop><stop offset="30%" stop-color="rgb(181, 212, 233)"></stop><stop offset="40%" stop-color="rgb(147, 195, 223)"></stop><stop offset="50%" stop-color="rgb(109, 174, 213)"></stop><stop offset="60%" stop-color="rgb(75, 151, 201)"></stop><stop offset="70%" stop-color="rgb(47, 126, 188)"></stop><stop offset="80%" stop-color="rgb(24, 100, 170)"></stop><stop offset="90%" stop-color="rgb(10, 74, 144)"></stop><stop offset="100%" stop-color="rgb(8, 48, 107)"></stop></linearGradient>
                     </defs>
-                    <rect x="10" y="0" width="100%" height="10" stroke="#000000" stroke-width="1" style={{ fill: 'url(#blue-gradient)' }}></rect>
+                    <rect x="10" y="0" width="100%" height="10" stroke="#000000" stroke-width="1" style={{ fill: 'url(#scale-gradient)' }}></rect>
                     <text x="50%" y="25" text-anchor="middle" style={{ fontSize: 8 }}>- # users +</text>
                 </svg>
             </div>
