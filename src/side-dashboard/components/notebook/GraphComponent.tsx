@@ -35,22 +35,9 @@ const GraphComponent = (props: {
                     <text x="50%" y="25" text-anchor="middle" style={{ fontSize: 8 }}>- # users +</text>
                 </svg>
             </div>
-            <div className="row justify-content-center">
-                <div className="col-auto">
-                    <p className="text-end">Cell level</p>
-                </div>
-                <div className="d-flex col-auto">
-                    <div className="form-check form-switch">
-                        <input className="form-check-input" type="checkbox" role="switch" id="levelSwitch" defaultChecked></input>
-                    </div>
-                </div>
-                <div className="col-auto">
-                    <p>Part level</p>
-                </div>
-            </div>
-            <div className="row" style={{ "height": "250px" }}>
+            <div className="row" style={{ "height": "300px" }}>
                 <div id="dagLoader"><Loader /></div>
-                <div ref={containerRef} id="main-s" style={{ width: "100%", height: "250px" }} />
+                <div ref={containerRef} id="main-s" style={{ width: "100%", height: "300px" }} />
             </div>
         </div>
     );

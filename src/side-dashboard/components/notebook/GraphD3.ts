@@ -5,8 +5,8 @@ import { JSONGraph, JSONGraphEdge, JSONGraphNode, ShowLevel } from "../../../uti
 
 export class NotebookD3Graph {
 
-    private aPartIsSelected: boolean = false; // true when focusing on a part
-    private levelShown: ShowLevel = ShowLevel.PART;
+    private aPartIsSelected: boolean = false; // true when clicking on a part
+    private aPartIsHovered: boolean = false; // true when hovering a part
 
     private strength = -20; // nodes base repulsive force
     private nodeRadius = 10;  // cell nodes radius
@@ -42,7 +42,6 @@ export class NotebookD3Graph {
     private partsEdges: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private partTextsG: d3.Selection<SVGGElement, string, SVGGElement, unknown>;
     private partRects: d3.Selection<SVGRectElement, string, SVGGElement, unknown>;
-    private cellsEdgesInterParts: d3.Selection<d3.BaseType | SVGLineElement, JSONGraphEdge, SVGGElement, unknown>;
     private zoom: d3.ZoomBehavior<Element, unknown>;
 
     private idealPositions: number[][] = [];
@@ -66,7 +65,7 @@ export class NotebookD3Graph {
         this.svg = d3.select(container)  // svg element
             .append("svg")
             .attr("width", this.width)
-            .attr("height", this.height)
+            .attr("height", 300)
             .attr("viewBox", [0, 0, this.width, this.height]);
         this.svg.selectAll("*").remove();
 
@@ -169,24 +168,7 @@ export class NotebookD3Graph {
             .attr("stroke", "#000000")
             .attr("stroke-width", 1)
             .attr("marker-end", "url(#arrow)")
-            .style("visibility", "hidden") // only display them on click on the part;
-
-        this.cellsEdgesInterParts = this.mainG.append("g")
-            .attr("name", "cellsEdgesInterParts")
-            .selectAll("line")
-            .data(nxJsonData.edges.filter(e => {
-                // only show the intra part edges
-                return !e.weight &&
-                    this.getPartOfNodeId((e.target as JSONGraphNode).id) !=
-                    this.getPartOfNodeId((e.source as JSONGraphNode).id)
-            }))
-            .join("line")
-            .attr("stroke", "#7A7AEE")
-            .attr("fill", "#7A7AEE")
-            .attr("stroke-width", 1)
-            .attr("marker-end", "url(#arrow)")
-            .style("visibility", "hidden"); // hidden since we initialize the viz in Part level mode;
-
+            .style("visibility", "hidden") // only display them on part hover;
 
         // make the edges directed by drawing an arrow at the end
         defs.append("marker")
@@ -236,31 +218,6 @@ export class NotebookD3Graph {
                 .attr("width", bbox.width + margin * 2)
                 .attr("height", bbox.height + margin * 2)
         });
-
-        // switch to toggle between cell and part levels
-        const levelSwitch = d3.select("#levelSwitch")
-            .on("change", (e) => {
-                this.levelShown = e.target.checked ? ShowLevel.PART : ShowLevel.CELL;
-                if (e.target.checked) {
-                    // part level
-                    this.partsEdges.style("visibility", "visible");
-                    this.cellsEdges.style("visibility", "hidden");
-                    this.cellsEdgesInterParts.style("visibility", "hidden");
-                    this.cellNodes.style("visibility", "hidden")
-                        .attr("fill", (n) => this.nodeColorScale(n.part));
-                    this.partNodes.attr("fill-opacity", "1");
-                } else {
-                    // cell level
-                    this.partsEdges.style("visibility", "hidden");
-                    this.cellsEdges.style("visibility", "visible");
-                    this.cellsEdgesInterParts.style("visibility", "visible");
-                    this.cellNodes.style("visibility", "visible")
-                        .attr("fill", (n) => this.blueScale(this.getActivityOfNode(n)));
-                    this.partNodes.attr("fill-opacity", "0");
-                }
-            });
-
-        (levelSwitch.node() as HTMLInputElement).checked = true;
     }
 
     private computeEdgeBetween(source: { x: number, y: number }, target: { x: number, y: number }, radius: number): { x1: number, x2: number, y1: number, y2: number } {
@@ -304,7 +261,7 @@ export class NotebookD3Graph {
             if (this.enableIdealPositions) {
                 this.centroids[p] = { cx: cIdealPosition[0] * 0.1 + 0.9 * (tx / N), cy: cIdealPosition[1] * 0.1 + 0.9 * (ty / N) };
             } else {
-                this.centroids[p] = { cx: (tx / N), cy: (ty / N) };
+                this.centroids[p] = { cx: (tx / N), cy: (ty / N) };  
             }
         });
 
@@ -376,6 +333,7 @@ export class NotebookD3Graph {
                     .attr("x2", x2)
                     .attr("y2", y2);
             });
+        const aPartIsHovered = this.aPartIsHovered;
         this.cellsEdges
             .each(function (d: any) {
                 const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target, nodeRadius);
@@ -383,17 +341,8 @@ export class NotebookD3Graph {
                     .attr("x1", x1)
                     .attr("y1", y1)
                     .attr("x2", x2)
-                    .attr("y2", y2);
-            });
-
-        this.cellsEdgesInterParts
-            .each(function (d: any) {
-                const { x1, x2, y1, y2 } = computeEdgeBetween(d.source, d.target, nodeRadius);
-                d3.select(this)
-                    .attr("x1", x1)
-                    .attr("y1", y1)
-                    .attr("x2", x2)
-                    .attr("y2", y2);
+                    .attr("y2", y2)
+                    .attr("visibility", aPartIsHovered ? "visible" : "hidden");
             });
 
         // update svg viewBox to avoid drawing nodes outside of the initial svg
@@ -420,11 +369,8 @@ export class NotebookD3Graph {
         newCellUsers.forEach((value) => totalUsers += value);
         this.totalUsers = totalUsers;
         this.cellUsers = newCellUsers;
-        if (this.levelShown === ShowLevel.PART) {
-            this.partNodes.attr("fill", (n) => this.blueScale(this.getActivityOfPart(n.part)));
-        } else {
-            this.cellNodes.attr("fill", (n) => this.blueScale(this.getActivityOfNode(n)));
-        }
+        this.partNodes.attr("fill", (n) => this.blueScale(this.getActivityOfPart(n.part)));
+        this.cellNodes.attr("fill", (n) => this.blueScale(this.getActivityOfNode(n)));
     }
 
     private getActivityOfPart(part: string) {
@@ -486,16 +432,16 @@ export class NotebookD3Graph {
         if (this.aPartIsSelected) {
             return;
         }
+        this.aPartIsHovered = true;
         const d3Circle = d3.select(circle);
         d3Circle
             .attr("fill-opacity", "0")
         this.partsEdges.filter(e => this.filterEdgesOfPart(e, d, true))
-            .attr("stroke-opacity", 1)
-            .attr("stroke-width", 5);
-        this.cellNodes.filter(n => this.filterNodesOfPart(n, d))
-            .style("visibility", "visible");
-        this.cellsEdges.filter(edge => this.filterEdgesOfPart(edge, d))
-            .style("visibility", "visible");
+            .attr("stroke-opacity", 1);
+        this.cellNodes
+            .style("visibility", "visible")
+            .attr("fill", (n) => this.blueScale(this.getActivityOfNode(n)));
+        this.cellsEdges.style("visibility", "visible");
     }
 
     private onPartLeave(d: string, circle: SVGCircleElement) {
@@ -503,15 +449,14 @@ export class NotebookD3Graph {
         if (this.aPartIsSelected) {
             return;
         }
+        this.aPartIsHovered = false;
         d3.select(circle)
-            .attr("fill-opacity", (e) => this.levelShown === ShowLevel.CELL ? "0" : "1")
+            .attr("fill-opacity", "1")
         this.partsEdges.filter(e => this.filterEdgesOfPart(e, d, true))
-            .attr("stroke-opacity", 1)
-            .attr("stroke-width", 1);
-        this.cellNodes.filter(n => this.filterNodesOfPart(n, d))
-            .style("visibility", (n) => this.levelShown === ShowLevel.CELL ? "visible" : "hidden")
-        this.cellsEdges.filter(edge => this.filterEdgesOfPart(edge, d))
-            .style("visibility", (e) => this.levelShown === ShowLevel.CELL ? "visible" : "hidden");
+            .attr("stroke-opacity", 1);
+        this.cellNodes
+            .style("visibility", "hidden")
+        this.cellsEdges.style("visibility", "hidden");
     }
 
     private onPartClick(d: string, circle: SVGCircleElement) {
