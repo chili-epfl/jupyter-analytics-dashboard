@@ -115,3 +115,8 @@ export interface TocData {
     location_count: Map<string, number>
   }
 }
+
+export interface CollabScoreForGroup {
+  group_id: string,
+  collaboration_score: number
+}

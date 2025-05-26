@@ -7,6 +7,7 @@ import CodeExecComponent from '../components/notebook/CodeExecComponent';
 import DAGComponent from '../components/notebook/DAGComponent';
 
 import { CommandRegistry } from '@lumino/commands';
+import CollabScoreComponent from '../components/notebook/CollabScoreComponent';
 
 interface INotebookPageProps {
   notebookId: string;
@@ -31,6 +32,10 @@ const Notebook = (props: INotebookPageProps): JSX.Element => {
             commands={props.commands}
           />
           <CellDurationComponent
+            notebookId={props.notebookId}
+            commands={props.commands}
+          />
+          <CollabScoreComponent
             notebookId={props.notebookId}
             commands={props.commands}
           />
