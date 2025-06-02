@@ -369,6 +369,7 @@ export class NotebookD3Graph {
         newCellUsers.forEach((value) => totalUsers += value);
         this.totalUsers = totalUsers;
         this.cellUsers = newCellUsers;
+        this.blueScale = d3.scaleSequential(d3.interpolateBlues).domain([0, Math.max(...newCellUsers.values())/this.totalUsers]);
         this.partNodes.attr("fill", (n) => this.blueScale(this.getActivityOfPart(n.part)));
         this.cellNodes.attr("fill", (n) => this.blueScale(this.getActivityOfNode(n)));
     }
