@@ -45,7 +45,7 @@ export class NotebookD3Graph {
     private zoom: d3.ZoomBehavior<Element, unknown>;
 
     private idealPositions: number[][] = [];
-    private enableIdealPositions = false;
+    private enableIdealPositions = true;
 
     constructor(
         private commands: any = { execute: (a: string, b: any) => { } }, // notebook commands
@@ -57,7 +57,7 @@ export class NotebookD3Graph {
 
         this.parts = [...new Set(this.nxJsonData.nodes.map(n => n.part))];
 
-        this.idealPositions = this.parts.map((p, i) => [i % 2 ? 250 : 0, i * 100]);
+        this.idealPositions = this.parts.map((p, i) => [i % 2 ? 350 : 0, i * 100]);
         this.nodeColorScale = d3.scaleOrdinal(this.parts, d3.schemeTableau10);
 
         // ================================ Definitions ================================
