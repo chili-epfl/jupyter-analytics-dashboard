@@ -66,7 +66,7 @@ export class NotebookD3Graph {
             .append("svg")
             .attr("width", this.width)
             .attr("height", 300)
-            .attr("viewBox", [0, 0, this.width, this.height]);
+            .attr("viewBox", [0, 0, 300, this.height]);
         this.svg.selectAll("*").remove();
 
         const defs = this.svg.append("defs");  // defs to store the arrows points
