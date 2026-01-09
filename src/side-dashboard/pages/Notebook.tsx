@@ -4,6 +4,7 @@ import TimeDropDown from '../components/buttons/TimeDropDown';
 import CodeExecComponent from '../components/notebook/CodeExecComponent';
 import GroupDropDown from '../components/buttons/GroupDropDown';
 import CellDurationComponent from '../components/notebook/CellDurationComponent';
+import PendingUpdatesChart from '../components/notebook/PendingUpdatesChart';
 
 import { CommandRegistry } from '@lumino/commands';
 
@@ -34,6 +35,8 @@ const Notebook = (props: INotebookPageProps): JSX.Element => {
             notebookId={props.notebookId}
             commands={props.commands}
           />
+
+          <PendingUpdatesChart notebookId={props.notebookId} />
         </Col>
       </Row>
     </>
