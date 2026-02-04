@@ -47,13 +47,18 @@ export class WebsocketManager {
 
       // If enough time has passed, refresh immediately
       if (now - this._lastRefreshTime >= this._refreshDebounceMs) {
-        console.log(`${APP_ID}: Received refresh dashboard request - executing immediately`);
+        console.log(
+          `${APP_ID}: Received refresh dashboard request - executing immediately`
+        );
         this._lastRefreshTime = now;
         dispatch(refreshDashboards());
       } else {
         // Otherwise, schedule a refresh for later
-        const remainingTime = this._refreshDebounceMs - (now - this._lastRefreshTime);
-        console.log(`${APP_ID}: Received refresh dashboard request - debouncing for ${remainingTime}ms`);
+        const remainingTime =
+          this._refreshDebounceMs - (now - this._lastRefreshTime);
+        console.log(
+          `${APP_ID}: Received refresh dashboard request - debouncing for ${remainingTime}ms`
+        );
 
         this._refreshTimeout = setTimeout(() => {
           console.log(`${APP_ID}: Executing debounced refresh`);
@@ -64,14 +69,19 @@ export class WebsocketManager {
       }
     });
 
-    this._socket.on('chat', (data: { message: string; sender: string } | string) => {
-      // Handle both old string format and new object format
-      if (typeof data === 'string') {
-        console.log(`${APP_ID}: message received : ${data}`);
-      } else {
-        console.log(`${APP_ID}: message received from ${data.sender}: ${data.message}`);
+    this._socket.on(
+      'chat',
+      (data: { message: string; sender: string } | string) => {
+        // Handle both old string format and new object format
+        if (typeof data === 'string') {
+          console.log(`${APP_ID}: message received : ${data}`);
+        } else {
+          console.log(
+            `${APP_ID}: message received from ${data.sender}: ${data.message}`
+          );
+        }
       }
-    });
+    );
 
     this._socket.on('connect_error', (event: any) => {
       console.error(`${APP_ID}: SocketIO error; `, event);

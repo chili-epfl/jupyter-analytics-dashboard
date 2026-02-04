@@ -5,13 +5,15 @@ import { useSelector } from 'react-redux';
 import { BACKEND_API_URL } from '../../..';
 import { RootState } from '../../../redux/store';
 import { baseChartOptions } from '../../../utils/chartOptions';
-import { fetchWithCredentials, generateQueryArgsString } from '../../../utils/utils';
+import {
+  fetchWithCredentials,
+  generateQueryArgsString
+} from '../../../utils/utils';
 import DashboardSummaryCards from '../common/DashboardSummaryCards';
-import GroupFilter, { GroupInfo } from '../common/GroupFilter';
-import SectionHeader from '../common/SectionHeader';
+import GroupFilter, { IGroupInfo } from '../common/GroupFilter';
 import ChartContainer from './ChartContainer';
 
-interface CellExecutionData {
+interface ICellExecutionData {
   cell: string;
   cell_click_pct: number;
   code_exec_pct: number;
@@ -19,10 +21,10 @@ interface CellExecutionData {
 }
 
 const CellExecutionProgressChart = (props: { notebookId: string }) => {
-  const [executionData, setExecutionData] = useState<CellExecutionData[]>([]);
+  const [executionData, setExecutionData] = useState<ICellExecutionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
-  const [availableGroups, setAvailableGroups] = useState<GroupInfo[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<IGroupInfo[]>([]);
 
   const dashboardQueryArgsRedux = useSelector(
     (state: RootState) => state.commondashboard.dashboardQueryArgs
@@ -42,7 +44,7 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
           `${BACKEND_API_URL}/dashboard/${props.notebookId}/getgroups`
         );
         const groupNames: string[] = await response.json();
-        const groups: GroupInfo[] = groupNames.map(name => ({
+        const groups: IGroupInfo[] = groupNames.map(name => ({
           name,
           studentCount: 0 // We don't have this data yet, could be enhanced
         }));
@@ -70,7 +72,7 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
             props.notebookId
           )}`
         );
-        const data: CellExecutionData[] = await response.json();
+        const data: ICellExecutionData[] = await response.json();
         setExecutionData(data);
       } catch (error) {
         console.error('Failed to fetch cell execution data:', error);
@@ -81,7 +83,12 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
     };
 
     fetchData();
-  }, [props.notebookId, dashboardQueryArgsRedux, refreshRequired, selectedGroups]);
+  }, [
+    props.notebookId,
+    dashboardQueryArgsRedux,
+    refreshRequired,
+    selectedGroups
+  ]);
 
   // Calculate summary statistics
   const calculateSummaryStats = () => {
@@ -95,12 +102,18 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
     }
 
     const totalCells = executionData.length;
-    const avgExecutionRate = executionData.reduce((sum, cell) => sum + cell.code_exec_pct, 0) / totalCells;
-    const avgSuccessRate = executionData.reduce((sum, cell) => sum + cell.code_exec_ok_pct, 0) / totalCells;
-    
+    const avgExecutionRate =
+      executionData.reduce((sum, cell) => sum + cell.code_exec_pct, 0) /
+      totalCells;
+    const avgSuccessRate =
+      executionData.reduce((sum, cell) => sum + cell.code_exec_ok_pct, 0) /
+      totalCells;
+
     // Calculate cells where success rate is significantly lower than execution rate (indicating errors)
     const cellsWithErrors = executionData.filter(
-      cell => cell.code_exec_pct > 0 && (cell.code_exec_ok_pct / cell.code_exec_pct) < 0.8
+      cell =>
+        cell.code_exec_pct > 0 &&
+        cell.code_exec_ok_pct / cell.code_exec_pct < 0.8
     ).length;
 
     return {
@@ -114,14 +127,15 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
   const stats = calculateSummaryStats();
 
   // Prepare chart data
-  const codeCells = notebookCells?.filter(cell => cell.cellType === 'code') || [];
-  
+  const codeCells =
+    notebookCells?.filter(cell => cell.cellType === 'code') || [];
+
   const chartData: ChartData<'bar'> = {
     labels: codeCells.map((_, idx) => `Cell ${idx + 1}`),
     datasets: [
       {
         label: 'Executed Successfully',
-        data: codeCells.map((cell) => {
+        data: codeCells.map(cell => {
           const match = executionData.find(d => d.cell === cell.id);
           return match ? match.code_exec_ok_pct : 0;
         }),
@@ -132,9 +146,11 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
       },
       {
         label: 'Executed with Errors',
-        data: codeCells.map((cell) => {
+        data: codeCells.map(cell => {
           const match = executionData.find(d => d.cell === cell.id);
-          if (!match) return 0;
+          if (!match) {
+            return 0;
+          }
           return match.code_exec_pct - match.code_exec_ok_pct;
         }),
         backgroundColor: 'rgba(255, 152, 0, 0.7)',
@@ -144,9 +160,11 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
       },
       {
         label: 'Not Executed',
-        data: codeCells.map((cell) => {
+        data: codeCells.map(cell => {
           const match = executionData.find(d => d.cell === cell.id);
-          if (!match) return 100;
+          if (!match) {
+            return 100;
+          }
           return 100 - match.code_exec_pct;
         }),
         backgroundColor: 'rgba(158, 158, 158, 0.3)',
@@ -177,7 +195,7 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
       },
       tooltip: {
         callbacks: {
-          label: (context) => {
+          label: context => {
             const label = context.dataset.label || '';
             const value = Math.round(context.parsed.x);
             return `${label}: ${value} students`;
@@ -196,7 +214,7 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
         },
         ticks: {
           color: 'var(--jp-ui-font-color1)',
-          callback: function(value) {
+          callback: function (value) {
             return value + '%';
           }
         }
@@ -266,7 +284,12 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
       <DashboardSummaryCards cards={summaryCards} />
 
       {/* Progress Chart */}
-      <div style={{ height: `${Math.max(300, codeCells.length * 30)}px`, marginTop: '16px' }}>
+      <div
+        style={{
+          height: `${Math.max(300, codeCells.length * 30)}px`,
+          marginTop: '16px'
+        }}
+      >
         <ChartContainer
           PassedComponent={<Bar data={chartData} options={chartOptions} />}
           title="Cell Execution Progress"
@@ -274,23 +297,40 @@ const CellExecutionProgressChart = (props: { notebookId: string }) => {
       </div>
 
       {/* Interpretation Guide */}
-      <div style={{
-        marginTop: '16px',
-        padding: '12px',
-        backgroundColor: 'var(--jp-layout-color2)',
-        border: '1px solid var(--jp-border-color1)',
-        borderRadius: '6px',
-        fontSize: '12px',
-        color: 'var(--jp-ui-font-color2)'
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--jp-ui-font-color1)' }}>
+      <div
+        style={{
+          marginTop: '16px',
+          padding: '12px',
+          backgroundColor: 'var(--jp-layout-color2)',
+          border: '1px solid var(--jp-border-color1)',
+          borderRadius: '6px',
+          fontSize: '12px',
+          color: 'var(--jp-ui-font-color2)'
+        }}
+      >
+        <div
+          style={{
+            fontWeight: 600,
+            marginBottom: '8px',
+            color: 'var(--jp-ui-font-color1)'
+          }}
+        >
           📊 How to Read This Chart
         </div>
         <ul style={{ margin: 0, paddingLeft: '20px' }}>
           <li>Each bar represents one code cell in the notebook</li>
-          <li><span style={{ color: '#4CAF50' }}>Green</span>: Successfully executed without errors</li>
-          <li><span style={{ color: '#FF9800' }}>Orange</span>: Executed but had errors</li>
-          <li><span style={{ color: '#9E9E9E' }}>Gray</span>: Not yet executed by students</li>
+          <li>
+            <span style={{ color: '#4CAF50' }}>Green</span>: Successfully
+            executed without errors
+          </li>
+          <li>
+            <span style={{ color: '#FF9800' }}>Orange</span>: Executed but had
+            errors
+          </li>
+          <li>
+            <span style={{ color: '#9E9E9E' }}>Gray</span>: Not yet executed by
+            students
+          </li>
           <li>Width shows percentage of students in each category</li>
         </ul>
       </div>

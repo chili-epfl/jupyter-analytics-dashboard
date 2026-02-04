@@ -1,18 +1,18 @@
 import React from 'react';
 
-export interface GroupInfo {
+export interface IGroupInfo {
   name: string;
   studentCount: number;
 }
 
-interface GroupFilterProps {
-  groups: GroupInfo[];
+interface IGroupFilterProps {
+  groups: IGroupInfo[];
   selectedGroups: string[];
   onGroupsChange: (selectedGroups: string[]) => void;
   multiSelect?: boolean;
 }
 
-const GroupFilter: React.FC<GroupFilterProps> = ({
+const GroupFilter: React.FC<IGroupFilterProps> = ({
   groups,
   selectedGroups,
   onGroupsChange,
@@ -41,24 +41,30 @@ const GroupFilter: React.FC<GroupFilterProps> = ({
   const isAllSelected = selectedGroups.length === groups.length;
 
   return (
-    <div style={{
-      backgroundColor: 'var(--jp-layout-color2)',
-      border: '1px solid var(--jp-border-color1)',
-      borderRadius: '6px',
-      padding: '12px',
-      marginBottom: '16px'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '10px'
-      }}>
-        <label style={{
-          fontSize: '13px',
-          fontWeight: 600,
-          color: 'var(--jp-ui-font-color1)'
-        }}>
+    <div
+      style={{
+        backgroundColor: 'var(--jp-layout-color2)',
+        border: '1px solid var(--jp-border-color1)',
+        borderRadius: '6px',
+        padding: '12px',
+        marginBottom: '16px'
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px'
+        }}
+      >
+        <label
+          style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            color: 'var(--jp-ui-font-color1)'
+          }}
+        >
           Filter by Group
         </label>
         {multiSelect && groups.length > 0 && (
@@ -80,22 +86,26 @@ const GroupFilter: React.FC<GroupFilterProps> = ({
       </div>
 
       {groups.length === 0 ? (
-        <div style={{
-          fontSize: '12px',
-          color: 'var(--jp-ui-font-color3)',
-          fontStyle: 'italic',
-          padding: '8px 0'
-        }}>
+        <div
+          style={{
+            fontSize: '12px',
+            color: 'var(--jp-ui-font-color3)',
+            fontStyle: 'italic',
+            padding: '8px 0'
+          }}
+        >
           No groups available
         </div>
       ) : (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          maxHeight: '200px',
-          overflowY: 'auto'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            maxHeight: '200px',
+            overflowY: 'auto'
+          }}
+        >
           {groups.map(group => {
             const isSelected = selectedGroups.includes(group.name);
             return (
@@ -106,18 +116,21 @@ const GroupFilter: React.FC<GroupFilterProps> = ({
                   alignItems: 'center',
                   gap: '8px',
                   padding: '6px 8px',
-                  backgroundColor: isSelected ? 'var(--jp-layout-color3)' : 'transparent',
+                  backgroundColor: isSelected
+                    ? 'var(--jp-layout-color3)'
+                    : 'transparent',
                   borderRadius: '4px',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
                   fontSize: '12px'
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={e => {
                   if (!isSelected) {
-                    e.currentTarget.style.backgroundColor = 'var(--jp-layout-color1)';
+                    e.currentTarget.style.backgroundColor =
+                      'var(--jp-layout-color1)';
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={e => {
                   if (!isSelected) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                   }
@@ -132,19 +145,23 @@ const GroupFilter: React.FC<GroupFilterProps> = ({
                     margin: 0
                   }}
                 />
-                <span style={{
-                  flex: 1,
-                  color: 'var(--jp-ui-font-color1)'
-                }}>
+                <span
+                  style={{
+                    flex: 1,
+                    color: 'var(--jp-ui-font-color1)'
+                  }}
+                >
                   {group.name}
                 </span>
-                <span style={{
-                  fontSize: '11px',
-                  color: 'var(--jp-ui-font-color3)',
-                  backgroundColor: 'var(--jp-layout-color1)',
-                  padding: '2px 6px',
-                  borderRadius: '10px'
-                }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--jp-ui-font-color3)',
+                    backgroundColor: 'var(--jp-layout-color1)',
+                    padding: '2px 6px',
+                    borderRadius: '10px'
+                  }}
+                >
                   {group.studentCount}
                 </span>
               </label>
