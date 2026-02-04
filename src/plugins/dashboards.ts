@@ -48,10 +48,10 @@ export async function activateDashboardPlugins(
 
   // If pushPlugin started earlier and exposed its service, hand it our real PanelManager (no polling)
   const pushSvc = (window as any).__UNIANALYTICS_PUSH_NOTEBOOK_SERVICE as
-    | import('./pushNotebookUpdatePlugin').IPushNotebookService
+    | import('./pushNotebookUpdate').IPushNotebookService
     | undefined;
   if (pushSvc && typeof (pushSvc as any).setPanelManager === 'function') {
-    console.log("Push Plugin Started earlier");
+    console.log('Push Plugin Started earlier');
     // call the setter to swap the manager inside the push service
     (pushSvc as any).setPanelManager(panelManager);
   }
@@ -226,7 +226,9 @@ export async function activateDashboardPlugins(
 }
 
 // Providing a Token and Plugin descriptor so other plugins can use the same PanelManager
-export const IDashboardManager = new Token<PanelManager>(`${APP_ID}:dashboard-manager`);
+export const IDashboardManager = new Token<PanelManager>(
+  `${APP_ID}:dashboard-manager`
+);
 
 export const dashboardPlugin: JupyterFrontEndPlugin<PanelManager> = {
   id: `${APP_ID}:dashboards`,
@@ -234,8 +236,12 @@ export const dashboardPlugin: JupyterFrontEndPlugin<PanelManager> = {
   provides: IDashboardManager,
   requires: [ILayoutRestorer, ILabShell, ISettingRegistry, IRenderMimeRegistry],
   activate: (app, restorer, labShell, settings, rendermime) => {
-
-
-    return activateDashboardPlugins(app, restorer, labShell, settings, rendermime);
+    return activateDashboardPlugins(
+      app,
+      restorer,
+      labShell,
+      settings,
+      rendermime
+    );
   }
 };
