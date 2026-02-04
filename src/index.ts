@@ -22,6 +22,8 @@ import { InteractionRecorder } from './utils/interactionRecorder';
 import { activateLoginPlugin } from './plugins/login';
 import { Signal } from '@lumino/signaling';
 import { RegistrationState } from './utils/interfaces';
+import { pushNotebookUpdateServicePlugin} from './plugins/pushNotebookUpdatePlugin';
+import { Token} from '@lumino/coreutils'; 
 
 // class and global instance of that class used to emit signals such as expired token to the dashboard panels to update the rendered element
 export class AuthSignal {
@@ -162,6 +164,8 @@ const activate = (
   }
 };
 
+// export const CORE_READY = new Token<boolean>(`${APP_ID}:core-ready`); 
+
 const plugin: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   autoStart: true,
@@ -176,4 +180,4 @@ const plugin: JupyterFrontEndPlugin<void> = {
   activate: activate
 };
 
-export default plugin;
+export default [plugin, pushNotebookUpdateServicePlugin]

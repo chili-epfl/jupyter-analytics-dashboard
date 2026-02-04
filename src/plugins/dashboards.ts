@@ -8,22 +8,26 @@ import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { Widget } from '@lumino/widgets';
 
-import { analyticsIcon } from '../icons';
-import { RegistrationState } from '../utils/interfaces';
-import { InteractionRecorder } from '../utils/interactionRecorder';
-import { APP_ID, visuIconClass, CommandIDs } from '../utils/constants';
-import { store, AppDispatch } from '../redux/store';
-import {
-  navigateToNotebook,
-  navigateToCell
-} from '../redux/reducers/SideDashboardReducer';
 import { PanelManager } from '../dashboard-widgets/PanelManager';
-import { VisuDashboardPanel } from '../dashboard-widgets/VisuDashboardPanel';
 import { TocDashboardPanel } from '../dashboard-widgets/TocDashboardPanel';
+import { VisuDashboardPanel } from '../dashboard-widgets/VisuDashboardPanel';
+import { analyticsIcon } from '../icons';
+import {
+  navigateToCell,
+  navigateToNotebook
+} from '../redux/reducers/SideDashboardReducer';
+import { AppDispatch, store } from '../redux/store';
+import { APP_ID, CommandIDs, visuIconClass } from '../utils/constants';
+import { InteractionRecorder } from '../utils/interactionRecorder';
+import { RegistrationState } from '../utils/interfaces';
 // import { ChatDashboardPanel } from '../dashboard-widgets/ChatDashboardPanel';
 import { PlaybackWidget } from '../dashboard-widgets/PlaybackWidget';
 import { addDashboardNotebookExtensions } from '../widget-extensions';
-import { activatePushNotebookUpdatePlugin } from './pushNotebookUpdate';
+//import { activatePushNotebookUpdatePlugin } from './pushNotebookUpdate';
+
+// Importing token to make this plugin accessible by other plugins
+import { JupyterFrontEndPlugin } from '@jupyterlab/application';
+import { Token } from '@lumino/coreutils';
 
 const dispatch = store.dispatch as AppDispatch;
 
@@ -33,7 +37,7 @@ export async function activateDashboardPlugins(
   labShell: ILabShell,
   settings: ISettingRegistry.ISettings | undefined,
   rendermime: IRenderMimeRegistry
-) {
+): Promise<PanelManager> {
   console.log(`JupyterLab extension ${APP_ID}: dashboard plugins activated!`);
 
   // adds the multiple notebook buttons associated with the dashboards
@@ -41,6 +45,16 @@ export async function activateDashboardPlugins(
 
   // define the object that will track the state of the current panel and expose it to the sidebar widgets
   const panelManager = new PanelManager();
+
+  // If pushPlugin started earlier and exposed its service, hand it our real PanelManager (no polling)
+  const pushSvc = (window as any).__UNIANALYTICS_PUSH_NOTEBOOK_SERVICE as
+    | import('./pushNotebookUpdatePlugin').IPushNotebookService
+    | undefined;
+  if (pushSvc && typeof (pushSvc as any).setPanelManager === 'function') {
+    console.log("Push Plugin Started earlier");
+    // call the setter to swap the manager inside the push service
+    (pushSvc as any).setPanelManager(panelManager);
+  }
 
   // initializing sidebar widgets
   const visuDashboardPanel = new VisuDashboardPanel(
@@ -65,7 +79,7 @@ export async function activateDashboardPlugins(
   // const chatDashboardPanel = new ChatDashboardPanel(panelManager);
 
   // add the plugin to push notebook updates to the connected students
-  activatePushNotebookUpdatePlugin(app, panelManager);
+  // activatePushNotebookUpdatePlugin(app, panelManager);
 
   // add the widgets to the sidebars
   labShell.add(visuDashboardPanel, 'right', { rank: 1000 });
@@ -206,4 +220,22 @@ export async function activateDashboardPlugins(
     const notebookPanel = widget as NotebookPanel;
     panelManager.panel = notebookPanel;
   }
+
+  // Returning the manager for other Plugins
+  return panelManager;
 }
+
+// Providing a Token and Plugin descriptor so other plugins can use the same PanelManager
+export const IDashboardManager = new Token<PanelManager>(`${APP_ID}:dashboard-manager`);
+
+export const dashboardPlugin: JupyterFrontEndPlugin<PanelManager> = {
+  id: `${APP_ID}:dashboards`,
+  autoStart: true,
+  provides: IDashboardManager,
+  requires: [ILayoutRestorer, ILabShell, ISettingRegistry, IRenderMimeRegistry],
+  activate: (app, restorer, labShell, settings, rendermime) => {
+
+
+    return activateDashboardPlugins(app, restorer, labShell, settings, rendermime);
+  }
+};

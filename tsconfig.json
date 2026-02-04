@@ -37,6 +37,7 @@
     "src/side-dashboard/components/notebook/*",
     "src/side-dashboard/components/layout/*",
     "src/side-dashboard/components/placeholder/*",
+    "src/side-dashboard/components/common/*",
     "src/side-dashboard/components/tmp/*",
     "src/side-dashboard/components/buttons/*",
     "src/side-dashboard/components/toc/*",
