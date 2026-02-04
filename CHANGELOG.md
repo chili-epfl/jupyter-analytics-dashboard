@@ -2,11 +2,28 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.0.0
+
+([Full Changelog](https://github.com/chili-epfl/jupyter-analytics-dashboard/compare/v4.0.21...ad1c9cadc7a47e77e689b2bc4dee929787fd2d28))
+
+### Merged PRs
+
+- feat: add PendingUpdatesChart component for visualizing student update actions and response times [#1](https://github.com/chili-epfl/jupyter-analytics-dashboard/pull/1) ([@Harkeerat2002](https://github.com/Harkeerat2002), [@zy-cai](https://github.com/zy-cai))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/chili-epfl/jupyter-analytics-dashboard/graphs/contributors?from=2025-04-23&to=2026-02-04&type=c))
+
+@Harkeerat2002 ([activity](https://github.com/search?q=repo%3Achili-epfl%2Fjupyter-analytics-dashboard+involves%3AHarkeerat2002+updated%3A2025-04-23..2026-02-04&type=Issues)) | @zy-cai ([activity](https://github.com/search?q=repo%3Achili-epfl%2Fjupyter-analytics-dashboard+involves%3Azy-cai+updated%3A2025-04-23..2026-02-04&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 4.0.21
 
 Adding a real-time sync functionality that allows the teacher to push notebook and cell-level updates to the connected students.
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.20
 
