@@ -2,6 +2,12 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.0.1
+
+No merged PRs
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 5.0.0
 
 ([Full Changelog](https://github.com/chili-epfl/jupyter-analytics-dashboard/compare/v4.0.21...ad1c9cadc7a47e77e689b2bc4dee929787fd2d28))
@@ -18,8 +24,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/chili-epfl/jupyter-analytics-dashboard/graphs/contributors?from=2025-04-23&to=2026-02-04&type=c))
 
 @Harkeerat2002 ([activity](https://github.com/search?q=repo%3Achili-epfl%2Fjupyter-analytics-dashboard+involves%3AHarkeerat2002+updated%3A2025-04-23..2026-02-04&type=Issues)) | @zy-cai ([activity](https://github.com/search?q=repo%3Achili-epfl%2Fjupyter-analytics-dashboard+involves%3Azy-cai+updated%3A2025-04-23..2026-02-04&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 4.0.21
 
