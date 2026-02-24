@@ -51,7 +51,6 @@ export async function activateDashboardPlugins(
     | import('./pushNotebookUpdate').IPushNotebookService
     | undefined;
   if (pushSvc && typeof (pushSvc as any).setPanelManager === 'function') {
-    console.log('Push Plugin Started earlier');
     // call the setter to swap the manager inside the push service
     (pushSvc as any).setPanelManager(panelManager);
   }

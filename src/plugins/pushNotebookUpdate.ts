@@ -55,7 +55,6 @@ class PushNotebookService implements IPushNotebookService {
       console.warn(`${APP_ID}: error closing local websocket`, e);
     }
 
-    console.log('Dashboard Plugin Using the Push Plugin Panel');
     this.panelManager = panelManager;
   }
 
@@ -85,7 +84,6 @@ class PushNotebookService implements IPushNotebookService {
       }
 
       const model = cellModel as any;
-      console.log(`${APP_ID}: Pushing cell update - cell_id: ${model.id}`);
 
       const minimalCell = {
         id: model.id,
@@ -188,7 +186,6 @@ export const pushNotebookUpdateServicePlugin: JupyterFrontEndPlugin<IPushNoteboo
       const createdLocal = !injectedPM;
 
       if (createdLocal) {
-        //console.log("Cannot find the Dashboard Plugin")
         // wire manager to the shell so the local PanelManager behaves like the dashboard's one
         try {
           // add notebook toolbar/cell buttons (same helper dashboards uses)

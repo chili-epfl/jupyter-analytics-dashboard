@@ -97,7 +97,6 @@ const PendingUpdatesChart = (props: { notebookId: string }) => {
           )}`
         );
         const data: IUpdateStat[] = await response.json();
-        console.log('Fetched pending updates stats:', data);
         setStats(data);
 
         // Auto-select most recent update
@@ -404,7 +403,7 @@ const PendingUpdatesChart = (props: { notebookId: string }) => {
     }
   };
 
-  if (loading) {
+  if (loading && stats.length === 0) {
     return (
       <div
         style={{
@@ -418,7 +417,7 @@ const PendingUpdatesChart = (props: { notebookId: string }) => {
     );
   }
 
-  if (stats.length === 0) {
+  if (!loading && stats.length === 0) {
     return (
       <div
         style={{
