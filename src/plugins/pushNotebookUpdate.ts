@@ -10,6 +10,7 @@ import { BACKEND_API_URL, CURRENT_NOTEBOOK_ID } from '..';
 import { PanelManager } from '../dashboard-widgets/PanelManager';
 import { APP_ID, CommandIDs } from '../utils/constants';
 import { fetchWithCredentials } from '../utils/utils';
+import { InteractionRecorder } from '../utils/interactionRecorder';
 
 // Defining the Token for the Plugin Service
 import { NotebookPanel } from '@jupyterlab/notebook';
@@ -223,7 +224,6 @@ export const pushNotebookUpdateServicePlugin: JupyterFrontEndPlugin<IPushNoteboo
       // expose the push service globally so a later-starting dashboards plugin can use it
       (window as any).__UNIANALYTICS_PUSH_NOTEBOOK_SERVICE = service;
 
-      // Same as the Original Implementation
       app.restored.then(() => {
         app.commands.addCommand(CommandIDs.pushCellUpdate, {
           label: 'Push the Selected Cell',
@@ -232,7 +232,13 @@ export const pushNotebookUpdateServicePlugin: JupyterFrontEndPlugin<IPushNoteboo
           // consult the service's live manager (may be swapped later)
           isVisible: () => service.getPanelManager().panel !== null,
           // rely on service's internal manager by default
-          execute: () => service.pushCellUpdate(undefined as any)
+          execute: () => {
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'PUSH_CELL_UPDATE'
+            });
+            service.pushCellUpdate(undefined as any)
+          }
         });
 
         app.contextMenu.addItem({
