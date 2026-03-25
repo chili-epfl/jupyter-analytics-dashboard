@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Chart as ChartJS, ChartData, ChartOptions } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Card, Row } from 'react-bootstrap';
@@ -101,6 +101,10 @@ const CellExecutionProgress = ({
   }, [notebookCells]);
 
   useEffect(() => {
+    chartRef.current?.resetZoom();
+  }, [timeStart]);
+
+  useEffect(() => {
     const timeStartDate = parseTimeStart(timeStart);
     const timeEndDate = new Date(
       timeStartDate.getTime() + TIME_WINDOW_MINUTES * 60000
@@ -155,49 +159,66 @@ const CellExecutionProgress = ({
               .map((x, i) => ({ x, y: values[i] }))
               .filter(p => p.x <= maxX);
 
-          setChartData({
-            datasets: [
-              {
-                label: 'Mean',
-                data: toPoints(mean),
-                borderColor: 'rgba(254, 176, 32, 1)',
-                backgroundColor: 'transparent',
-                fill: false as any,
-                pointRadius: 2,
-                borderWidth: 2,
-                tension: 0.3
-              },
-              {
-                label: 'Median',
-                data: toPoints(median),
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'transparent',
-                fill: false as any,
-                pointRadius: 2,
-                borderWidth: 2,
-                borderDash: [5, 5],
-                tension: 0.3
-              },
-              {
-                label: 'IQR (Q1–Q3)',
-                data: toPoints(q3),
-                borderColor: 'transparent',
-                backgroundColor: 'rgba(54, 162, 235, 0.15)',
-                fill: 3,
-                pointRadius: 0,
-                tension: 0.3
-              },
-              {
-                label: '_q1_hidden',
-                data: toPoints(q1),
-                borderColor: 'transparent',
-                backgroundColor: 'transparent',
-                fill: false as any,
-                pointRadius: 0,
-                tension: 0.3
-              }
-            ]
-          });
+          // extend the last known value to "now" so a dot always sits on the vertical line
+          const extendToNow = (pts: { x: number; y: number }[]) => {
+            if (!pts.length || currentXValueRef.current === null) {
+              return pts;
+            }
+            const last = pts[pts.length - 1];
+            if (last.x >= currentXValueRef.current) {
+              return pts;
+            }
+            return [...pts, { x: currentXValueRef.current, y: last.y }];
+          };
+
+          const newDatasets = [
+            {
+              label: 'Mean',
+              data: extendToNow(toPoints(mean)),
+              borderColor: 'rgba(254, 176, 32, 1)',
+              backgroundColor: 'transparent',
+              fill: false as any,
+              pointRadius: 2,
+              borderWidth: 2,
+              tension: 0.3
+            },
+            {
+              label: 'Median',
+              data: extendToNow(toPoints(median)),
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'transparent',
+              fill: false as any,
+              pointRadius: 2,
+              borderWidth: 2,
+              borderDash: [5, 5],
+              tension: 0.3
+            },
+            {
+              label: 'IQR (Q1–Q3)',
+              data: extendToNow(toPoints(q3)),
+              borderColor: 'transparent',
+              backgroundColor: 'rgba(54, 162, 235, 0.15)',
+              fill: 3,
+              pointRadius: 0,
+              tension: 0.3
+            },
+            {
+              label: '_q1_hidden',
+              data: extendToNow(toPoints(q1)),
+              borderColor: 'transparent',
+              backgroundColor: 'transparent',
+              fill: false as any,
+              pointRadius: 0,
+              tension: 0.3
+            }
+          ];
+
+          setChartData({ datasets: newDatasets });
+          if (chartRef.current) {
+            (
+              chartRef.current.options.plugins as any
+            ).cellProgressVerticalLine.xValue = currentXValueRef.current;
+          }
         }
       )
       .catch(() => {});
@@ -213,12 +234,16 @@ const CellExecutionProgress = ({
 
   const isPending = pendingTimeStart !== timeStart;
 
-  const chartOptions = getCellProgressOptions(
-    timeStart,
-    currentXValueRef,
-    nCells,
-    notebookCellsRef,
-    commands
+  const chartOptions = useMemo(
+    () =>
+      getCellProgressOptions(
+        timeStart,
+        currentXValueRef,
+        nCells,
+        notebookCellsRef,
+        commands
+      ),
+    [timeStart, nCells]
   );
 
   return (
@@ -314,6 +339,7 @@ const getCellProgressOptions = (
   const startDate = parseTimeStart(timeStart);
   return {
     ...baseChartOptions,
+    animation: false,
     plugins: {
       ...baseChartOptions.plugins,
       legend: {
