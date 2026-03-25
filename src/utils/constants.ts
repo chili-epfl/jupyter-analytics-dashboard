@@ -24,6 +24,8 @@ export namespace CommandIDs {
 
   export const pushCellUpdate = `${APP_ID}:dashboard-push-cell-update`;
 
+  export const pushCellUpdateWithHint = `${APP_ID}:dashboard-push-cell-update-with-hint`;
+
   export const pushNotebookUpdate = `${APP_ID}:dashboard-push-notebook-update`;
 }
 

@@ -3,7 +3,7 @@ import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
-import { ICommandPalette } from '@jupyterlab/apputils';
+import { ICommandPalette, InputDialog } from '@jupyterlab/apputils';
 import { INotebookModel, INotebookTracker } from '@jupyterlab/notebook';
 import { shareIcon } from '@jupyterlab/ui-components';
 import { BACKEND_API_URL, CURRENT_NOTEBOOK_ID } from '..';
@@ -22,7 +22,7 @@ import { IDashboardManager } from './dashboards';
  * The Notebook Update interface Token. A unique identification for the serve this plugin provides. THis is mechanism by which other plugin can use this service.
  */
 export interface IPushNotebookService {
-  pushCellUpdate(panelManager: PanelManager): Promise<void>;
+  pushCellUpdate(panelManager: PanelManager, hint?: string): Promise<void>;
   pushNotebookUpdate(panelManager: PanelManager): Promise<void>;
 }
 
@@ -64,7 +64,10 @@ class PushNotebookService implements IPushNotebookService {
     return this.panelManager;
   }
 
-  async pushCellUpdate(panelManager: PanelManager): Promise<void> {
+  async pushCellUpdate(
+    panelManager: PanelManager,
+    hint?: string
+  ): Promise<void> {
     const pm = panelManager ?? this.panelManager;
     // use pm below instead of the passed-in panelManager
     const notebookID = CURRENT_NOTEBOOK_ID;
@@ -92,11 +95,14 @@ class PushNotebookService implements IPushNotebookService {
         source: model.toJSON().source
       };
 
-      const payload = {
+      const payload: Record<string, any> = {
         content: minimalCell,
         action: 'update_cell',
-        update_id: crypto.randomUUID() // Generate unique update ID
+        update_id: crypto.randomUUID()
       };
+      if (hint) {
+        payload.hint = hint;
+      }
 
       await this.pushUpdateToStudents(
         this.panelManager,
@@ -237,7 +243,40 @@ export const pushNotebookUpdateServicePlugin: JupyterFrontEndPlugin<IPushNoteboo
               click_type: 'ON',
               signal_origin: 'PUSH_CELL_UPDATE'
             });
-            service.pushCellUpdate(undefined as any)
+            service.pushCellUpdate(undefined as any);
+          }
+        });
+
+        app.commands.addCommand(CommandIDs.pushCellUpdateWithHint, {
+          label: 'Push the Selected Cell',
+          caption: 'Share the selected cell with a hint for connected students',
+          icon: shareIcon,
+          isVisible: () => service.getPanelManager().panel !== null,
+          execute: async () => {
+            const style = document.createElement('style');
+            style.textContent = `
+                .jp-Dialog-content {
+                  min-width: 520px !important;
+                }
+                .jp-Dialog-content input[type="text"] {
+                  width: 100% !important;
+                }
+              `;
+            document.head.appendChild(style);
+            const result = await InputDialog.getText({
+              title: 'Press OK to send this cell to students',
+              label: '(Optional) You can add a hint below:',
+              placeholder: 'e.g. Focus on the loop condition'
+            });
+            style.remove();
+            if (!result.button.accept) {
+              return;
+            }
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'PUSH_CELL_UPDATE_WITH_HINT'
+            });
+            service.pushCellUpdate(undefined as any, result.value || undefined);
           }
         });
 
@@ -247,14 +286,8 @@ export const pushNotebookUpdateServicePlugin: JupyterFrontEndPlugin<IPushNoteboo
         });
 
         app.contextMenu.addItem({
-          command: CommandIDs.pushCellUpdate,
+          command: CommandIDs.pushCellUpdateWithHint,
           selector: '.jp-Cell'
-        });
-
-        // add to command palette for discoverability
-        palette.addItem({
-          command: CommandIDs.pushCellUpdate,
-          category: 'Notebook'
         });
       });
 

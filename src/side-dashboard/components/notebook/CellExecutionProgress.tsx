@@ -44,9 +44,13 @@ const verticalLinePlugin = {
     options: { xValue: number | null }
   ) {
     const xVal = options?.xValue;
-    if (xVal === null || xVal === undefined) return;
+    if (xVal === null || xVal === undefined) {
+      return;
+    }
     const xScale = chart.scales['x'];
-    if (!xScale) return;
+    if (!xScale) {
+      return;
+    }
     const xPixel = xScale.getPixelForValue(xVal);
     const { top, bottom } = chart.chartArea;
     const ctx = chart.ctx;
@@ -103,8 +107,7 @@ const CellExecutionProgress = ({
     );
 
     // Compute where "now" sits on the x-axis (in minutes from timeStart)
-    const nowMinutes =
-      (new Date().getTime() - timeStartDate.getTime()) / 60000;
+    const nowMinutes = (new Date().getTime() - timeStartDate.getTime()) / 60000;
     currentXValueRef.current =
       nowMinutes >= 0 && nowMinutes <= TIME_WINDOW_MINUTES ? nowMinutes : null;
 
@@ -326,11 +329,15 @@ const getCellProgressOptions = (
         ...baseChartOptions.plugins?.tooltip,
         callbacks: {
           title: (items: any[]) => {
-            if (!items.length) return '';
+            if (!items.length) {
+              return '';
+            }
             return formatMinutesAsTime(items[0].parsed.x as number, startDate);
           },
           label: (item: any) => {
-            if (item.dataset.label?.startsWith('_')) return null as any;
+            if (item.dataset.label?.startsWith('_')) {
+              return null as any;
+            }
             if (item.dataset.label === 'IQR (Q1–Q3)') {
               return `IQR upper (Q3): cell ${item.parsed.y.toFixed(1)}`;
             }
@@ -362,7 +369,9 @@ const getCellProgressOptions = (
     },
     onClick: (event, _elements, chart) => {
       const native = event.native as MouseEvent;
-      if (!native || native.offsetX > chart.chartArea.left) return;
+      if (!native || native.offsetX > chart.chartArea.left) {
+        return;
+      }
       const cellPosition = Math.round(
         chart.scales['y'].getValueForPixel(native.offsetY) ?? 0
       );
@@ -377,7 +386,9 @@ const getCellProgressOptions = (
     },
     onHover: (event, _elements, chart) => {
       const native = event.native as MouseEvent;
-      if (!native) return;
+      if (!native) {
+        return;
+      }
       chart.canvas.style.cursor =
         native.offsetX <= chart.chartArea.left ? 'pointer' : 'default';
     },
