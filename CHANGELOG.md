@@ -2,14 +2,20 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.0.3
+
+No merged PRs
+
+Fix a minor issue of rendering the progress plot
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 5.0.2
 
 No merged PRs
 
 1. Add an execution progress plot on the notebook-level dashboard
 1. Support entering a hint before pushing the cell update
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 5.0.1
 
