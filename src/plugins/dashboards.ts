@@ -162,6 +162,12 @@ export async function activateDashboardPlugins(
               signal_origin: 'TIME_VISU_CLICK'
             });
             break;
+          case 'CellExecutionProgress':
+            InteractionRecorder.sendInteraction({
+              click_type: 'ON',
+              signal_origin: 'PROGRESS_VISU_CLICK'
+            });
+            break;
           default:
             console.log(
               `${APP_ID}: dashboardScrollToCell command called from an unknown source.`
