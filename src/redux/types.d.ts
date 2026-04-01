@@ -49,6 +49,7 @@ export interface IDashboardQueryArgs {
 
 export interface CommonDashboardState {
   notebookCells: NotebookCell[] | null;
+  activeCellId: string | null;
   refreshBoolean: boolean;
   dashboardQueryArgs: IDashboardQueryArgs;
 }

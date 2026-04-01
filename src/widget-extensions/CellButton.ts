@@ -9,6 +9,10 @@ import { CommandRegistry } from '@lumino/commands';
 import { CommandIDs } from '../utils/constants';
 import { isNotebookValidForVisu } from '../utils/utils';
 import { CompatibilityManager } from '../utils/compatibility';
+import { AppDispatch, store } from '../redux/store';
+import { setActiveCellId } from '../redux/reducers/CommonDashboardReducer';
+
+const dispatch = store.dispatch as AppDispatch;
 
 // if changed, adapt in the css too
 const CELL_BUTTON_CLASS = 'cell-dashboard-button-container';
@@ -115,6 +119,7 @@ export class CellTracker implements IDisposable {
 
     this._addCellButton(activeCell.model);
     this._previousActiveCell = activeCell;
+    dispatch(setActiveCellId(activeCell.model.id));
   }
 
   private _getCell(model: ICellModel): Cell | undefined {
@@ -146,6 +151,7 @@ export class CellTracker implements IDisposable {
       return;
     }
     this._isDisposed = true;
+    dispatch(setActiveCellId(null));
 
     const cells = CompatibilityManager.getCellsArrComp(
       this._panel?.context.model.cells

@@ -34,6 +34,38 @@ const formatMinutesAsTime = (
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+// Inline Chart.js plugin for a short thick tick on the y-axis at the active cell.
+// Options are read from chart.options.plugins.cellProgressActiveTick.
+const activeCellTickPlugin = {
+  id: 'cellProgressActiveTick',
+  afterDraw(
+    chart: ChartJS,
+    _args: unknown,
+    options: { yValue: number | null }
+  ) {
+    const yVal = options?.yValue;
+    if (yVal === null || yVal === undefined) {
+      return;
+    }
+    const yScale = chart.scales['y'];
+    if (!yScale) {
+      return;
+    }
+    const yPixel = yScale.getPixelForValue(yVal);
+    const x = chart.chartArea.left;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x - 8, yPixel);
+    ctx.lineTo(x + 4, yPixel);
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+
 // Inline Chart.js plugin for the current-time vertical line.
 // Options are read from chart.options.plugins.cellProgressVerticalLine.
 const verticalLinePlugin = {
@@ -78,7 +110,12 @@ const CellExecutionProgress = ({
   const [pendingTimeStart, setPendingTimeStart] = useState<string>('10:00');
   const [nCells, setNCells] = useState<number>(20);
   const [chartData, setChartData] = useState<ChartData<'line'>>({
-    datasets: []
+    datasets: [
+      { label: 'Mean', data: [], borderColor: 'rgba(254, 176, 32, 1)', backgroundColor: 'transparent' },
+      { label: 'Median', data: [], borderColor: 'rgba(54, 162, 235, 1)', backgroundColor: 'transparent' },
+      { label: 'IQR (Q1–Q3)', data: [], borderColor: 'transparent', backgroundColor: 'rgba(54, 162, 235, 0.15)' },
+      { label: '_q1_hidden', data: [], borderColor: 'transparent', backgroundColor: 'transparent' }
+    ]
   });
 
   // currentXValue: minutes from timeStart to now, null if outside the window
@@ -95,6 +132,26 @@ const CellExecutionProgress = ({
   const notebookCells = useSelector(
     (state: RootState) => state.commondashboard.notebookCells
   );
+  const activeCellId = useSelector(
+    (state: RootState) => state.commondashboard.activeCellId
+  );
+
+  const activeCellPositionRef = useRef<number | null>(null);
+  const activeCellPosition = useMemo(() => {
+    if (!activeCellId || !notebookCells) return null;
+    const idx = notebookCells.findIndex(c => c.id === activeCellId);
+    return idx >= 0 ? idx + 1 : null;
+  }, [activeCellId, notebookCells]);
+  activeCellPositionRef.current = activeCellPosition;
+
+  useEffect(() => {
+    if (chartRef.current) {
+      (
+        chartRef.current.options.plugins as any
+      ).cellProgressActiveTick.yValue = activeCellPosition;
+      chartRef.current.update('none');
+    }
+  }, [activeCellPosition]);
 
   useEffect(() => {
     notebookCellsRef.current = notebookCells;
@@ -250,7 +307,8 @@ const CellExecutionProgress = ({
         currentXValueRef,
         nCells,
         notebookCellsRef,
-        commands
+        commands,
+        activeCellPositionRef
       ),
     [timeStart, nCells]
   );
@@ -362,7 +420,7 @@ const CellExecutionProgress = ({
             ref={chartRef}
             data={chartData}
             options={chartOptions}
-            plugins={[verticalLinePlugin as any]}
+            plugins={[activeCellTickPlugin as any, verticalLinePlugin as any]}
           />
         </Card.Body>
       </Card>
@@ -375,7 +433,8 @@ const getCellProgressOptions = (
   currentXValueRef: React.RefObject<number | null>,
   nCells: number,
   notebookCellsRef: React.RefObject<NotebookCell[] | null>,
-  commands: CommandRegistry
+  commands: CommandRegistry,
+  activeCellPositionRef: React.RefObject<number | null>
 ): ChartOptions<'line'> => {
   const startDate = parseTimeStart(timeStart);
   return {
@@ -444,6 +503,10 @@ const getCellProgressOptions = (
       // options consumed by verticalLinePlugin
       cellProgressVerticalLine: {
         xValue: currentXValueRef.current
+      } as any,
+      // options consumed by activeCellMarkerPlugin
+      cellProgressActiveTick: {
+        yValue: activeCellPositionRef.current
       } as any
     },
     onClick: (event, _elements, chart) => {
@@ -498,7 +561,15 @@ const getCellProgressOptions = (
         ticks: {
           ...baseChartOptions.scales?.y?.ticks,
           precision: 0,
-          stepSize: 1
+          stepSize: 1,
+          color: (ctx: any) =>
+            ctx.tick?.value === activeCellPositionRef.current
+              ? 'black'
+              : '#969696',
+          font: (ctx: any) =>
+            ctx.tick?.value === activeCellPositionRef.current
+              ? { weight: 'bold' as const }
+              : {}
         },
         title: {
           ...baseChartOptions.scales?.y?.title,

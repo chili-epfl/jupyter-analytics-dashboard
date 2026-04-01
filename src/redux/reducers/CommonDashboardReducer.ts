@@ -4,6 +4,7 @@ import { areListsEqual } from '../../utils/utils';
 
 export const initialCommonDashboardState: CommonDashboardState = {
   notebookCells: null,
+  activeCellId: null,
   refreshBoolean: false,
   dashboardQueryArgs: {
     displayRealTime: {},
@@ -75,6 +76,9 @@ export const commonDashboardSlice = createSlice({
     setNotebookCells: (state, action: PayloadAction<NotebookCell[] | null>) => {
       state.notebookCells = action.payload;
     },
+    setActiveCellId: (state, action: PayloadAction<string | null>) => {
+      state.activeCellId = action.payload;
+    },
     refreshDashboards: state => {
       state.refreshBoolean = !state.refreshBoolean;
     }
@@ -88,6 +92,7 @@ export const {
   setDashboardQueryArgsDisplayRealTime,
   setSortBy,
   setNotebookCells,
+  setActiveCellId,
   refreshDashboards
 } = commonDashboardSlice.actions;
 
