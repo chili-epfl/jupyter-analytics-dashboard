@@ -466,7 +466,7 @@ const PendingUpdatesChart = (props: { notebookId: string }) => {
             const total = stat.update_now + stat.update_later;
             const rate =
               total > 0 ? Math.round((stat.update_now / total) * 100) : 0;
-            const time = new Date(stat.timestamp).toLocaleString();
+            const time = new Date(stat.timestamp + 'Z').toLocaleString();
             return (
               <option key={stat.update_id} value={stat.update_id}>
                 Update {idx + 1} - {time} ({rate}% response rate)
