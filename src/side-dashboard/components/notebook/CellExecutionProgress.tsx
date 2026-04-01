@@ -249,6 +249,28 @@ const CellExecutionProgress = ({
   return (
     <Row className="mb-4">
       <Card className="chart-card">
+        <style>{`
+          .cell-progress-btn {
+            font-size: 13px;
+            border: 1px solid #ced4da;
+            padding: 2px 6px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
+          }
+          .cell-progress-btn:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+          }
+          .cell-progress-btn:active {
+            background-color: #d3d9df;
+            border-color: #868e96;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+            transform: translateY(1px);
+          }
+        `}</style>
         <Card.Title className="chart-card-title">
           <span>Cell execution progress over time</span>
         </Card.Title>
@@ -266,10 +288,22 @@ const CellExecutionProgress = ({
             onChange={e => setPendingTimeStart(e.target.value)}
             style={{
               fontSize: '13px',
-              borderWidth: '1px',
+              border: '1px solid #ced4da',
               padding: '2px 6px'
             }}
           />
+          <button
+            className="cell-progress-btn"
+            onClick={() => {
+              const now = new Date();
+              const nowStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              setPendingTimeStart(nowStr);
+            }}
+            title="Set to current time"
+            style={{ marginLeft: '4px' }}
+          >
+            Now
+          </button>
           {isPending && (
             <>
               <CheckLg
@@ -301,12 +335,10 @@ const CellExecutionProgress = ({
             </>
           )}
           <button
+            className="cell-progress-btn"
             onClick={handleResetZoom}
             style={{
               marginLeft: 'auto',
-              fontSize: '13px',
-              borderWidth: '1px',
-              padding: '2px 6px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
@@ -373,10 +405,15 @@ const getCellProgressOptions = (
       },
       zoom: {
         zoom: {
-          drag: { enabled: true },
+          drag: {
+            enabled: true,
+            backgroundColor: 'rgba(100, 149, 237, 0.25)',
+            borderColor: 'rgba(100, 149, 237, 0.8)',
+            borderWidth: 1
+          },
           wheel: { enabled: false },
           pinch: { enabled: false },
-          mode: 'x',
+          mode: 'xy',
           onZoomComplete: () => {
             InteractionRecorder.sendInteraction({
               click_type: 'ON',
@@ -385,7 +422,8 @@ const getCellProgressOptions = (
           }
         },
         limits: {
-          x: { min: 0, max: TIME_WINDOW_MINUTES, minRange: 5 }
+          x: { min: 0, max: TIME_WINDOW_MINUTES, minRange: 5 },
+          y: { min: 1, max: nCells, minRange: 2 }
         }
       },
       // options consumed by verticalLinePlugin
