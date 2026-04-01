@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab_unianalytics_dashboard",
-    "version": "5.0.3",
+    "version": "5.0.4",
     "description": "A JupyterLab dashboard extension to visualize data from students.",
     "keywords": [
         "jupyter",

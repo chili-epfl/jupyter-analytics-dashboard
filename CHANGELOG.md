@@ -2,13 +2,19 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 5.0.4
+
+No merged PRs
+
+Update the progress plot and fix UI issues
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 5.0.3
 
 No merged PRs
 
 Fix a minor issue of rendering the progress plot
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 5.0.2
 
