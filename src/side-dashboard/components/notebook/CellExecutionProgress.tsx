@@ -111,10 +111,30 @@ const CellExecutionProgress = ({
   const [nCells, setNCells] = useState<number>(20);
   const [chartData, setChartData] = useState<ChartData<'line'>>({
     datasets: [
-      { label: 'Mean', data: [], borderColor: 'rgba(254, 176, 32, 1)', backgroundColor: 'transparent' },
-      { label: 'Median', data: [], borderColor: 'rgba(54, 162, 235, 1)', backgroundColor: 'transparent' },
-      { label: 'IQR (Q1–Q3)', data: [], borderColor: 'transparent', backgroundColor: 'rgba(54, 162, 235, 0.15)' },
-      { label: '_q1_hidden', data: [], borderColor: 'transparent', backgroundColor: 'transparent' }
+      {
+        label: 'Mean',
+        data: [],
+        borderColor: 'rgba(254, 176, 32, 1)',
+        backgroundColor: 'transparent'
+      },
+      {
+        label: 'Median',
+        data: [],
+        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'transparent'
+      },
+      {
+        label: 'IQR (Q1–Q3)',
+        data: [],
+        borderColor: 'transparent',
+        backgroundColor: 'rgba(54, 162, 235, 0.15)'
+      },
+      {
+        label: '_q1_hidden',
+        data: [],
+        borderColor: 'transparent',
+        backgroundColor: 'transparent'
+      }
     ]
   });
 
@@ -138,7 +158,9 @@ const CellExecutionProgress = ({
 
   const activeCellPositionRef = useRef<number | null>(null);
   const activeCellPosition = useMemo(() => {
-    if (!activeCellId || !notebookCells) return null;
+    if (!activeCellId || !notebookCells) {
+      return null;
+    }
     const idx = notebookCells.findIndex(c => c.id === activeCellId);
     return idx >= 0 ? idx + 1 : null;
   }, [activeCellId, notebookCells]);
@@ -146,9 +168,8 @@ const CellExecutionProgress = ({
 
   useEffect(() => {
     if (chartRef.current) {
-      (
-        chartRef.current.options.plugins as any
-      ).cellProgressActiveTick.yValue = activeCellPosition;
+      (chartRef.current.options.plugins as any).cellProgressActiveTick.yValue =
+        activeCellPosition;
       chartRef.current.update('none');
     }
   }, [activeCellPosition]);
