@@ -140,12 +140,14 @@ const CellExecutionProgress = ({
           median: number[];
           q1: number[];
           q3: number[];
+          n_users: number[];
         }) => {
           const timestamps: string[] = data.timestamps ?? [];
           const mean: number[] = data.mean ?? [];
           const median: number[] = data.median ?? [];
           const q1: number[] = data.q1 ?? [];
           const q3: number[] = data.q3 ?? [];
+          const nUsers: number[] = data.n_users ?? [];
 
           const xValues = timestamps.map(
             ts =>
@@ -159,8 +161,15 @@ const CellExecutionProgress = ({
               .map((x, i) => ({ x, y: values[i] }))
               .filter(p => p.x <= maxX);
 
+          // mean points carry nUsers for tooltip
+          const meanPoints = xValues
+            .map((x, i) => ({ x, y: mean[i], nUsers: nUsers[i] ?? 0 }))
+            .filter(p => p.x <= maxX);
+
           // extend the last known value to "now" so a dot always sits on the vertical line
-          const extendToNow = (pts: { x: number; y: number }[]) => {
+          const extendToNow = <T extends { x: number; y: number }>(
+            pts: T[]
+          ): T[] => {
             if (!pts.length || currentXValueRef.current === null) {
               return pts;
             }
@@ -168,13 +177,13 @@ const CellExecutionProgress = ({
             if (last.x >= currentXValueRef.current) {
               return pts;
             }
-            return [...pts, { x: currentXValueRef.current, y: last.y }];
+            return [...pts, { ...last, x: currentXValueRef.current }];
           };
 
           const newDatasets = [
             {
               label: 'Mean',
-              data: extendToNow(toPoints(mean)),
+              data: extendToNow(meanPoints),
               borderColor: 'rgba(254, 176, 32, 1)',
               backgroundColor: 'transparent',
               fill: false as any,
@@ -390,7 +399,13 @@ const getCellProgressOptions = (
             if (!items.length) {
               return '';
             }
-            return formatMinutesAsTime(items[0].parsed.x as number, startDate);
+            const time = formatMinutesAsTime(
+              items[0].parsed.x as number,
+              startDate
+            );
+            const meanItem = items.find((i: any) => i.datasetIndex === 0);
+            const n: number | undefined = (meanItem?.raw as any)?.nUsers;
+            return n !== undefined ? `${time}  (n=${n})` : time;
           },
           label: (item: any) => {
             if (item.dataset.label?.startsWith('_')) {
